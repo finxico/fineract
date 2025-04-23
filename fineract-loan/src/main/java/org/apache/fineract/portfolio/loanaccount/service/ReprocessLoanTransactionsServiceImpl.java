@@ -40,11 +40,13 @@ public class ReprocessLoanTransactionsServiceImpl implements ReprocessLoanTransa
     private final LoanAccountService loanAccountService;
     private final LoanAccountTransfersService loanAccountTransfersService;
     private final ReplayedTransactionBusinessEventService replayedTransactionBusinessEventService;
-    private final LoanTransactionProcessingService loadTransactionProcessingService;
+    private final LoanTransactionProcessingService loanTransactionProcessingService;
+    private final LoanTransactionService loanTransactionService;
 
     @Override
     public void reprocessTransactions(final Loan loan) {
-        final List<LoanTransaction> allNonContraTransactionsPostDisbursement = loan.retrieveListOfTransactionsForReprocessing();
+        final List<LoanTransaction> allNonContraTransactionsPostDisbursement = loanTransactionService
+                .retrieveListOfTransactionsForReprocessing(loan);
         final ChangedTransactionDetail changedTransactionDetail = reprocessTransactionsAndFetchChangedTransactions(loan,
                 allNonContraTransactionsPostDisbursement);
         handleChangedDetail(changedTransactionDetail);
@@ -59,13 +61,13 @@ public class ReprocessLoanTransactionsServiceImpl implements ReprocessLoanTransa
     @Override
     public void reprocessTransactionsWithPostTransactionChecks(final Loan loan, final LocalDate transactionDate) {
         final ChangedTransactionDetail changedTransactionDetail = reprocessTransactionsAndFetchChangedTransactions(loan,
-                loan.retrieveListOfTransactionsForReprocessing());
+                loanTransactionService.retrieveListOfTransactionsForReprocessing(loan));
         handleChangedDetail(changedTransactionDetail);
     }
 
     @Override
     public void processPostDisbursementTransactions(final Loan loan) {
-        loadTransactionProcessingService.processPostDisbursementTransactions(loan).ifPresent(this::handleChangedDetail);
+        loanTransactionProcessingService.processPostDisbursementTransactions(loan).ifPresent(this::handleChangedDetail);
     }
 
     @Override
@@ -98,7 +100,7 @@ public class ReprocessLoanTransactionsServiceImpl implements ReprocessLoanTransa
 
     @Override
     public void processLatestTransaction(final LoanTransaction loanTransaction, final Loan loan) {
-        final ChangedTransactionDetail changedTransactionDetail = loadTransactionProcessingService.processLatestTransaction(
+        final ChangedTransactionDetail changedTransactionDetail = loanTransactionProcessingService.processLatestTransaction(
                 loan.getTransactionProcessingStrategyCode(), loanTransaction,
                 new TransactionCtx(loan.getCurrency(), loan.getRepaymentScheduleInstallments(), loan.getActiveCharges(),
                         new MoneyHolder(loan.getTotalOverpaidAsMoney()), new ChangedTransactionDetail()));
@@ -126,7 +128,7 @@ public class ReprocessLoanTransactionsServiceImpl implements ReprocessLoanTransa
 
     private ChangedTransactionDetail reprocessTransactionsAndFetchChangedTransactions(final Loan loan,
             final List<LoanTransaction> loanTransactions) {
-        final ChangedTransactionDetail changedTransactionDetail = loadTransactionProcessingService.reprocessLoanTransactions(
+        final ChangedTransactionDetail changedTransactionDetail = loanTransactionProcessingService.reprocessLoanTransactions(
                 loan.getTransactionProcessingStrategyCode(), loan.getDisbursementDate(), loanTransactions, loan.getCurrency(),
                 loan.getRepaymentScheduleInstallments(), loan.getActiveCharges());
         for (TransactionChangeData change : changedTransactionDetail.getTransactionChanges()) {

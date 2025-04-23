@@ -51,6 +51,7 @@ public class LoanTransactionProcessingService {
 
     private final LoanRepaymentScheduleTransactionProcessorFactory transactionProcessorFactory;
     private final LoanTermVariationsMapper loanMapper;
+    private final LoanTransactionService loanTransactionService;
 
     public ChangedTransactionDetail processLatestTransaction(String transactionProcessingStrategyCode, LoanTransaction loanTransaction,
             TransactionCtx ctx) {
@@ -75,7 +76,8 @@ public class LoanTransactionProcessingService {
     public Optional<ChangedTransactionDetail> processPostDisbursementTransactions(Loan loan) {
         final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = getTransactionProcessor(
                 loan.getTransactionProcessingStrategyCode());
-        final List<LoanTransaction> allNonContraTransactionsPostDisbursement = loan.retrieveListOfTransactionsForReprocessing();
+        final List<LoanTransaction> allNonContraTransactionsPostDisbursement = loanTransactionService
+                .retrieveListOfTransactionsForReprocessing(loan);
         final List<LoanTransaction> copyTransactions = new ArrayList<>();
 
         if (allNonContraTransactionsPostDisbursement.isEmpty()) {
@@ -150,4 +152,5 @@ public class LoanTransactionProcessingService {
         return new OutstandingAmountsDTO(totalPrincipal.getCurrency()).principal(totalPrincipal).interest(totalInterest)
                 .feeCharges(feeCharges).penaltyCharges(penaltyCharges);
     }
+
 }

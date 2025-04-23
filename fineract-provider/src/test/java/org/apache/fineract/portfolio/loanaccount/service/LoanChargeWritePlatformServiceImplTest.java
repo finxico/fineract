@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -176,7 +177,7 @@ class LoanChargeWritePlatformServiceImplTest {
         when(chargeRepository.findOneWithNotFoundDetection(anyLong())).thenReturn(chargeDefinition);
         when(chargeDefinition.getChargeTimeType()).thenReturn(SPECIFIED_DUE_DATE);
         when(chargeDefinition.getCurrencyCode()).thenReturn(CURRENCY_CODE);
-        when(loanChargeAssembler.createNewFromJson(loan, chargeDefinition, jsonCommand)).thenReturn(loanCharge);
+        when(loanChargeAssembler.createNewFromJson(any(Loan.class), any(Charge.class), any(JsonCommand.class))).thenReturn(loanCharge);
         when(loan.repaymentScheduleDetail()).thenReturn(loanRepaymentScheduleDetail);
         when(loanRepaymentScheduleDetail.getLoanScheduleType()).thenReturn(LoanScheduleType.CUMULATIVE);
         when(loan.getLoanRepaymentScheduleDetail()).thenReturn(loanRepaymentScheduleDetail);
@@ -198,7 +199,7 @@ class LoanChargeWritePlatformServiceImplTest {
         when(loan.getLoanCharges()).thenReturn(new HashSet<>());
         when(loan.getDisbursementDate()).thenReturn(LocalDate.now(ZoneId.systemDefault()));
         when(loan.getRepaymentScheduleInstallments()).thenReturn(new ArrayList<>());
-        when(loan.calculateAmountPercentageAppliedTo(any(LoanCharge.class))).thenReturn(BigDecimal.TEN);
+        when(loanChargeService.calculateAmountPercentageAppliedTo(any(Loan.class), any(LoanCharge.class))).thenReturn(BigDecimal.TEN);
         when(loan.fetchNumberOfInstallmensAfterExceptions()).thenReturn(5);
         when(loan.updateSummaryWithTotalFeeChargesDueAtDisbursement(any(BigDecimal.class))).thenReturn(null);
         when(loan.deriveSumTotalOfChargesDueAtDisbursement()).thenReturn(BigDecimal.ZERO);
@@ -219,8 +220,8 @@ class LoanChargeWritePlatformServiceImplTest {
     void shouldHandleAccrualBasedOnConfigurationAndDates(boolean isAccrualEnabled, LocalDate businessDate, LocalDate maturityDate, boolean isAccrualExpected) {
         when(configurationDomainService.isImmediateChargeAccrualPostMaturityEnabled()).thenReturn(isAccrualEnabled);
         when(loan.getMaturityDate()).thenReturn(maturityDate);
-        when(loan.handleChargeAppliedTransaction(loanCharge, null)).thenReturn(loanTransaction);
-        when(loan.createChargeAppliedTransaction(loanCharge, null)).thenReturn(loanTransaction);
+        when(loan.handleChargeAppliedTransaction(any(LoanCharge.class), eq(null))).thenReturn(loanTransaction);
+        when(loan.createChargeAppliedTransaction(any(LoanCharge.class), eq(null))).thenReturn(loanTransaction);
 
         if (isAccrualExpected) {
             when(loan.isPeriodicAccrualAccountingEnabledOnLoanProduct()).thenReturn(true);

@@ -87,12 +87,16 @@ import org.apache.fineract.portfolio.loanaccount.data.LoanAccountData;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanInstallmentCharge;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
+import org.apache.fineract.portfolio.loanaccount.serialization.LoanChargeValidator;
 import org.apache.fineract.portfolio.loanaccount.service.LoanChargeReadPlatformService;
+import org.apache.fineract.portfolio.loanaccount.service.LoanChargeService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
+import org.apache.fineract.portfolio.loanaccount.service.LoanTransactionProcessingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -120,6 +124,9 @@ public class LoanAccountDelinquencyRangeEventSerializerTest {
 
     @Mock
     private AvroDateTimeMapper mapper;
+
+    private final LoanChargeService loanChargeService = new LoanChargeService(mock(LoanChargeValidator.class),
+            mock(LoanTransactionProcessingService.class), mock(LoanLifecycleStateMachine.class));
 
     private MockedStatic<MoneyHelper> moneyHelper = Mockito.mockStatic(MoneyHelper.class);
 
@@ -427,8 +434,9 @@ public class LoanAccountDelinquencyRangeEventSerializerTest {
     }
 
     private LoanCharge buildLoanCharge(Loan loan, BigDecimal amount, Charge charge) {
-        LoanCharge loanCharge = new LoanCharge(loan, charge, amount, amount, ChargeTimeType.SPECIFIED_DUE_DATE, ChargeCalculationType.FLAT,
-                LocalDate.of(2022, 6, 27), ChargePaymentMode.REGULAR, 1, new BigDecimal(100), ExternalId.generate());
+        LoanCharge loanCharge = loanChargeService.create(loan, charge, amount, amount, ChargeTimeType.SPECIFIED_DUE_DATE,
+                ChargeCalculationType.FLAT, LocalDate.of(2022, 6, 27), ChargePaymentMode.REGULAR, 1, new BigDecimal(100),
+                ExternalId.generate());
         ReflectionTestUtils.setField(loanCharge, "id", 1L);
         return loanCharge;
     }

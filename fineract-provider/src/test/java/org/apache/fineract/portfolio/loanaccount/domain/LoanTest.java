@@ -265,8 +265,25 @@ public class LoanTest {
      * @return the {@link LoanCharge}
      */
     private LoanCharge buildLoanCharge() {
-        return new LoanCharge(mock(Loan.class), mock(Charge.class), new BigDecimal(100), new BigDecimal(100),
-                ChargeTimeType.TRANCHE_DISBURSEMENT, ChargeCalculationType.FLAT, LocalDate.of(2022, 6, 27), ChargePaymentMode.REGULAR, 1,
-                new BigDecimal(100), ExternalId.generate());
+        final LoanCharge loanCharge = new LoanCharge();
+        Loan mockLoan = mock(Loan.class);
+        Charge mockCharge = mock(Charge.class);
+
+        loanCharge.setLoan(mockLoan);
+        loanCharge.setCharge(mockCharge);
+        loanCharge.setAmount(new BigDecimal(100));
+        loanCharge.setAmountOutstanding(new BigDecimal(100));
+        loanCharge.setChargeTime(ChargeTimeType.TRANCHE_DISBURSEMENT.getValue());
+        loanCharge.setChargeCalculation(ChargeCalculationType.FLAT.getValue());
+        loanCharge.setDueDate(LocalDate.of(2022, 6, 27));
+        loanCharge.setChargePaymentMode(ChargePaymentMode.REGULAR.getValue());
+        loanCharge.setPercentage(null);
+        loanCharge.setAmountPercentageAppliedTo(null);
+        loanCharge.setAmountPaid(null);
+        loanCharge.setAmountWaived(null);
+        loanCharge.setAmountWrittenOff(null);
+        loanCharge.setExternalId(ExternalId.generate());
+
+        return loanCharge;
     }
 }

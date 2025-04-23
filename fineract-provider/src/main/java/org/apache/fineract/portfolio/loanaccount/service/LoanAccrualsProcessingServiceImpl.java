@@ -112,6 +112,7 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
     private final ThreadPoolTaskExecutor taskExecutor;
     private final TransactionTemplate transactionTemplate;
     private final LoanAccountingBridgeMapper loanAccountingBridgeMapper;
+    private final LoanTransactionService loanTransactionService;
 
     /**
      * method adds accrual for batch job "Add Periodic Accrual Transactions" and add accruals api for Loan
@@ -306,7 +307,8 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
         // TODO implement progressive accrual case
         if (loan.isPeriodicAccrualAccountingEnabledOnLoanProduct()
                 && (loan.getAccruedTill() == null || !DateUtils.isEqual(foreClosureDate, loan.getAccruedTill()))) {
-            final LoanRepaymentScheduleInstallment foreCloseDetail = loan.fetchLoanForeclosureDetail(foreClosureDate);
+            final LoanRepaymentScheduleInstallment foreCloseDetail = loanTransactionService.fetchLoanForeclosureDetail(loan,
+                    foreClosureDate);
             MonetaryCurrency currency = loan.getCurrency();
             reverseTransactionsAfter(retrieveListOfAccrualTransactions(loan), foreClosureDate, false);
 

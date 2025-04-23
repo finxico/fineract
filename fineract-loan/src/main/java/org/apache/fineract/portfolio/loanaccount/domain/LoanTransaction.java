@@ -900,4 +900,23 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
     public void updateTransactionDate(final LocalDate transactionDate) {
         this.dateOf = transactionDate;
     }
+
+    public boolean isChronologicallyLatestRepaymentOrWaiver() {
+        boolean isChronologicallyLatestRepaymentOrWaiver = true;
+
+        final LocalDate currentTransactionDate = this.getTransactionDate();
+        for (final LoanTransaction previousTransaction : loan.getLoanTransactions()) {
+            if (!previousTransaction.isDisbursement() && previousTransaction.isNotReversed()
+                    && (DateUtils.isBefore(currentTransactionDate, previousTransaction.getTransactionDate())
+                            || (DateUtils.isEqual(currentTransactionDate, previousTransaction.getTransactionDate())
+                                    && ((this.getId() == null && previousTransaction.getId() == null)
+                                            || (this.getId() != null && (previousTransaction.getId() == null
+                                                    || this.getId().compareTo(previousTransaction.getId()) < 0)))))) {
+                isChronologicallyLatestRepaymentOrWaiver = false;
+                break;
+            }
+        }
+        return isChronologicallyLatestRepaymentOrWaiver;
+    }
+
 }

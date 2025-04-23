@@ -30,6 +30,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionToRepaymentScheduleMapping;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.AbstractLoanRepaymentScheduleTransactionProcessor;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.LoanRepaymentScheduleTransactionProcessor;
+import org.apache.fineract.portfolio.loanaccount.serialization.LoanChargeValidator;
 
 /**
  * Creocore style {@link LoanRepaymentScheduleTransactionProcessor}.
@@ -47,8 +48,9 @@ public class CreocoreLoanRepaymentScheduleTransactionProcessor extends AbstractL
 
     public static final String STRATEGY_NAME = "Creocore Unique";
 
-    public CreocoreLoanRepaymentScheduleTransactionProcessor(ExternalIdFactory externalIdFactory) {
-        super(externalIdFactory);
+    public CreocoreLoanRepaymentScheduleTransactionProcessor(final ExternalIdFactory externalIdFactory,
+            final LoanChargeValidator loanChargeValidator) {
+        super(externalIdFactory, loanChargeValidator);
     }
 
     @Override

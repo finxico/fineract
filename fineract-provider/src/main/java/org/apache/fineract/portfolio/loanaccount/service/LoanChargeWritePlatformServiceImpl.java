@@ -182,6 +182,7 @@ public class LoanChargeWritePlatformServiceImpl implements LoanChargeWritePlatfo
     private final LoanAdjustmentService loanAdjustmentService;
     private final LoanAccountingBridgeMapper loanAccountingBridgeMapper;
     private final LoanChargeService loanChargeService;
+    private final LoanTransactionService loanTransactionService;
 
     private static boolean isPartOfThisInstallment(LoanCharge loanCharge, LoanRepaymentScheduleInstallment e) {
         return DateUtils.isAfter(loanCharge.getDueDate(), e.getFromDate()) && !DateUtils.isAfter(loanCharge.getDueDate(), e.getDueDate());
@@ -288,7 +289,7 @@ public class LoanChargeWritePlatformServiceImpl implements LoanChargeWritePlatfo
                 .equals(loan.transactionProcessingStrategy())) {
             // [For Adv payment allocation strategy] check if charge due date is earlier than last transaction
             // date, if yes trigger reprocess else no reprocessing
-            LoanTransaction lastPaymentTransaction = loan.getLastTransactionForReprocessing();
+            LoanTransaction lastPaymentTransaction = loanTransactionService.getLastTransactionForReprocessing(loan);
             if (lastPaymentTransaction != null
                     && DateUtils.isAfter(loanCharge.getEffectiveDueDate(), lastPaymentTransaction.getTransactionDate())) {
                 reprocessRequired = false;
@@ -474,8 +475,8 @@ public class LoanChargeWritePlatformServiceImpl implements LoanChargeWritePlatfo
 
         final Map<String, Object> changes = new LinkedHashMap<>(3);
         if (loan.getActiveCharges().contains(loanCharge)) {
-            final BigDecimal amount = loan.calculateAmountPercentageAppliedTo(loanCharge);
-            final Map<String, Object> loanChargeChanges = loanCharge.update(command, amount);
+            final BigDecimal amount = loanChargeService.calculateAmountPercentageAppliedTo(loan, loanCharge);
+            final Map<String, Object> loanChargeChanges = loanChargeService.update(command, amount, loanCharge);
             changes.putAll(loanChargeChanges);
             loan.updateSummaryWithTotalFeeChargesDueAtDisbursement(loan.deriveSumTotalOfChargesDueAtDisbursement());
         }

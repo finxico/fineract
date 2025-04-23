@@ -76,8 +76,8 @@ import org.springframework.util.CollectionUtils;
 public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implements LoanRepaymentScheduleTransactionProcessor {
 
     protected final SingleLoanChargeRepaymentScheduleProcessingWrapper loanChargeProcessor = new SingleLoanChargeRepaymentScheduleProcessingWrapper();
-    protected final LoanChargeValidator loanChargeValidator = new LoanChargeValidator();
     protected final ExternalIdFactory externalIdFactory;
+    protected final LoanChargeValidator loanChargeValidator;
 
     @Override
     public boolean accept(String s) {

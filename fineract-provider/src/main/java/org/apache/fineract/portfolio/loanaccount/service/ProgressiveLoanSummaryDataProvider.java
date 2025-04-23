@@ -53,6 +53,7 @@ public class ProgressiveLoanSummaryDataProvider extends CommonLoanSummaryDataPro
     private final AdvancedPaymentScheduleTransactionProcessor advancedPaymentScheduleTransactionProcessor;
     private final EMICalculator emiCalculator;
     private final LoanRepositoryWrapper loanRepository;
+    private final LoanTransactionService loanTransactionService;
 
     @Override
     public boolean accept(String loanProcessingStrategyCode) {
@@ -93,8 +94,8 @@ public class ProgressiveLoanSummaryDataProvider extends CommonLoanSummaryDataPro
                 return MathUtil.subtractToZero(currentRepaymentPeriod.get().getInterestOutstanding(loan.getCurrency()).getAmount(),
                         totalUnpaidPayableDueInterest);
             } else {
-                List<LoanTransaction> transactionsToReprocess = loan.retrieveListOfTransactionsForReprocessing().stream()
-                        .filter(t -> !t.isAccrualActivity()).toList();
+                List<LoanTransaction> transactionsToReprocess = loanTransactionService.retrieveListOfTransactionsForReprocessing(loan)
+                        .stream().filter(t -> !t.isAccrualActivity()).toList();
                 Pair<ChangedTransactionDetail, ProgressiveLoanInterestScheduleModel> changedTransactionDetailProgressiveLoanInterestScheduleModelPair = advancedPaymentScheduleTransactionProcessor
                         .reprocessProgressiveLoanTransactions(loan.getDisbursementDate(), businessDate, transactionsToReprocess,
                                 loan.getCurrency(), loan.getRepaymentScheduleInstallments(), loan.getActiveCharges());

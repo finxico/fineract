@@ -30,6 +30,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionToRepaymentScheduleMapping;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.AbstractLoanRepaymentScheduleTransactionProcessor;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.LoanRepaymentScheduleTransactionProcessor;
+import org.apache.fineract.portfolio.loanaccount.serialization.LoanChargeValidator;
 
 /**
  * Old style {@link LoanRepaymentScheduleTransactionProcessor}.
@@ -47,8 +48,9 @@ public class FineractStyleLoanRepaymentScheduleTransactionProcessor extends Abst
 
     public static final String STRATEGY_NAME = "Penalties, Fees, Interest, Principal order";
 
-    public FineractStyleLoanRepaymentScheduleTransactionProcessor(ExternalIdFactory externalIdFactory) {
-        super(externalIdFactory);
+    public FineractStyleLoanRepaymentScheduleTransactionProcessor(final ExternalIdFactory externalIdFactory,
+            final LoanChargeValidator loanChargeValidator) {
+        super(externalIdFactory, loanChargeValidator);
     }
 
     @Override

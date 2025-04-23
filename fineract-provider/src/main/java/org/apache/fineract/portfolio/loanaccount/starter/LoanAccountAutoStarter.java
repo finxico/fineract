@@ -33,6 +33,8 @@ import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.imp
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.InterestPrincipalPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.PrincipalInterestPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.RBILoanRepaymentScheduleTransactionProcessor;
+import org.apache.fineract.portfolio.loanaccount.serialization.LoanChargeValidator;
+import org.apache.fineract.portfolio.loanaccount.service.LoanTransactionService;
 import org.apache.fineract.portfolio.loanaccount.service.ProgressiveLoanInterestRefundServiceImpl;
 import org.apache.fineract.portfolio.loanaccount.service.schedule.LoanScheduleComponent;
 import org.apache.fineract.portfolio.loanproduct.calc.EMICalculator;
@@ -48,63 +50,64 @@ public class LoanAccountAutoStarter {
     @Bean
     @Conditional(CreocoreLoanRepaymentScheduleTransactionProcessorCondition.class)
     public CreocoreLoanRepaymentScheduleTransactionProcessor creocoreLoanRepaymentScheduleTransactionProcessor(
-            ExternalIdFactory externalIdFactory) {
-        return new CreocoreLoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new CreocoreLoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
     @Conditional(EarlyRepaymentLoanRepaymentScheduleTransactionProcessorCondition.class)
     public EarlyPaymentLoanRepaymentScheduleTransactionProcessor earlyPaymentLoanRepaymentScheduleTransactionProcessor(
-            ExternalIdFactory externalIdFactory) {
-        return new EarlyPaymentLoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new EarlyPaymentLoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
     @Conditional(MifosStandardLoanRepaymentScheduleTransactionProcessorCondition.class)
     public FineractStyleLoanRepaymentScheduleTransactionProcessor fineractStyleLoanRepaymentScheduleTransactionProcessor(
-            ExternalIdFactory externalIdFactory) {
-        return new FineractStyleLoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new FineractStyleLoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
     @Conditional(HeavensFamilyLoanRepaymentScheduleTransactionProcessorCondition.class)
     public HeavensFamilyLoanRepaymentScheduleTransactionProcessor heavensFamilyLoanRepaymentScheduleTransactionProcessor(
-            ExternalIdFactory externalIdFactory) {
-        return new HeavensFamilyLoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new HeavensFamilyLoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
     @Conditional(InterestPrincipalPenaltiesFeesLoanRepaymentScheduleTransactionProcessorCondition.class)
     public InterestPrincipalPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor interestPrincipalPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor(
-            ExternalIdFactory externalIdFactory) {
-        return new InterestPrincipalPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new InterestPrincipalPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
     @Conditional(PrincipalInterestPenaltiesFeesLoanRepaymentScheduleTransactionProcessorCondition.class)
     public PrincipalInterestPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor principalInterestPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor(
-            ExternalIdFactory externalIdFactory) {
-        return new PrincipalInterestPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new PrincipalInterestPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
     @Conditional(RBIIndiaLoanRepaymentScheduleTransactionProcessorCondition.class)
-    public RBILoanRepaymentScheduleTransactionProcessor rbiLoanRepaymentScheduleTransactionProcessor(ExternalIdFactory externalIdFactory) {
-        return new RBILoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+    public RBILoanRepaymentScheduleTransactionProcessor rbiLoanRepaymentScheduleTransactionProcessor(
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new RBILoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
     @Conditional(DuePenFeeIntPriInAdvancePriPenFeeIntLoanRepaymentScheduleTransactionProcessorCondition.class)
     public DuePenFeeIntPriInAdvancePriPenFeeIntLoanRepaymentScheduleTransactionProcessor duePenFeeIntPriInAdvancePriPenFeeIntLoanRepaymentScheduleTransactionProcessor(
-            ExternalIdFactory externalIdFactory) {
-        return new DuePenFeeIntPriInAdvancePriPenFeeIntLoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new DuePenFeeIntPriInAdvancePriPenFeeIntLoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
     @Conditional(DuePenIntPriFeeInAdvancePenIntPriFeeLoanRepaymentScheduleTransactionProcessorCondition.class)
     public DuePenIntPriFeeInAdvancePenIntPriFeeLoanRepaymentScheduleTransactionProcessor duePenIntPriFeeInAdvancePenIntPriFeeLoanRepaymentScheduleTransactionProcessor(
-            ExternalIdFactory externalIdFactory) {
-        return new DuePenIntPriFeeInAdvancePenIntPriFeeLoanRepaymentScheduleTransactionProcessor(externalIdFactory);
+            final ExternalIdFactory externalIdFactory, final LoanChargeValidator loanChargeValidator) {
+        return new DuePenIntPriFeeInAdvancePenIntPriFeeLoanRepaymentScheduleTransactionProcessor(externalIdFactory, loanChargeValidator);
     }
 
     @Bean
@@ -117,11 +120,12 @@ public class LoanAccountAutoStarter {
 
     @Bean
     @Conditional(AdvancedPaymentScheduleTransactionProcessorCondition.class)
-    public AdvancedPaymentScheduleTransactionProcessor advancedPaymentScheduleTransactionProcessor(EMICalculator emiCalculator,
-            LoanRepositoryWrapper loanRepositoryWrapper,
-            @Lazy ProgressiveLoanInterestRefundServiceImpl progressiveLoanInterestRefundService, ExternalIdFactory externalIdFactory,
-            LoanScheduleComponent loanSchedule) {
+    public AdvancedPaymentScheduleTransactionProcessor advancedPaymentScheduleTransactionProcessor(final EMICalculator emiCalculator,
+            final LoanRepositoryWrapper loanRepositoryWrapper,
+            final @Lazy ProgressiveLoanInterestRefundServiceImpl progressiveLoanInterestRefundService, ExternalIdFactory externalIdFactory,
+            final LoanScheduleComponent loanSchedule, final LoanTransactionService loanTransactionService,
+            final LoanChargeValidator loanChargeValidator) {
         return new AdvancedPaymentScheduleTransactionProcessor(emiCalculator, loanRepositoryWrapper, progressiveLoanInterestRefundService,
-                externalIdFactory, loanSchedule);
+                externalIdFactory, loanSchedule, loanTransactionService, loanChargeValidator);
     }
 }
