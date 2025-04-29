@@ -70,9 +70,9 @@ public class LoanTransactionProcessingServiceImpl implements LoanTransactionProc
     private Loan getLoan(List<LoanTransaction> loanTransactions, List<LoanRepaymentScheduleInstallment> installments,
             Set<LoanCharge> charges) {
         if (!ObjectUtils.isEmpty(loanTransactions)) {
-            return loanTransactions.getFirst().getLoan();
+            return loanTransactions.get(0).getLoan();
         } else if (!ObjectUtils.isEmpty(installments)) {
-            return installments.getFirst().getLoan();
+            return installments.get(0).getLoan();
         } else if (!ObjectUtils.isEmpty(charges)) {
             return charges.iterator().next().getLoan();
         } else {
