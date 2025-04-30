@@ -456,6 +456,7 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
         this.penaltyChargesPortion = null;
         this.overPaymentPortion = null;
         this.outstandingLoanBalance = null;
+        this.loanChargesPaid.clear();
     }
 
     public void updateLoan(final Loan loan) {

@@ -39,8 +39,10 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleIns
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.LoanRepaymentScheduleTransactionProcessor;
+import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.MoneyHolder;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.TransactionCtx;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.AdvancedPaymentScheduleTransactionProcessor;
+import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.ProgressiveTransactionCtx;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleDTO;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
@@ -60,10 +62,43 @@ public class LoanTransactionProcessingServiceImpl implements LoanTransactionProc
     private final InterestScheduleModelRepositoryWrapper modelRepository;
 
     @Override
+    public boolean canProcessLatestTransactionOnly(Loan loan, LoanTransaction loanTransaction) {
+        if (loan.isProgressiveSchedule() && loan.isInterestBearingAndInterestRecalculationEnabled()) {
+            return modelRepository.hasValidModelForDate(loan.getId(), loanTransaction.getTransactionDate());
+        }
+        return true;
+    }
+
+    private ChangedTransactionDetail processLatestTransactionProgressiveInterestRecalculation(
+            AdvancedPaymentScheduleTransactionProcessor advancedProcessor, Loan loan, LoanTransaction loanTransaction) {
+        Optional<ProgressiveLoanInterestScheduleModel> savedModel = modelRepository.getSavedModel(loan,
+                loanTransaction.getTransactionDate());
+
+        if (savedModel.isEmpty()) {
+            throw new IllegalStateException("No saved interest schedule model found for loan #" + loan.getId() + " with transaction date "
+                    + loanTransaction.getTransactionDate());
+        }
+
+        ProgressiveTransactionCtx progressiveContext = new ProgressiveTransactionCtx(loan.getCurrency(),
+                loan.getRepaymentScheduleInstallments(), loan.getActiveCharges(), new MoneyHolder(loan.getTotalOverpaidAsMoney()),
+                new ChangedTransactionDetail(), savedModel.orElse(null));
+        progressiveContext.setChargedOff(loan.isChargedOff());
+        ChangedTransactionDetail result = advancedProcessor.processLatestTransaction(loanTransaction, progressiveContext);
+        if (!TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
+            modelRepository.writeInterestScheduleModel(loan, savedModel.get());
+        }
+        return result;
+    }
+
+    @Override
     public ChangedTransactionDetail processLatestTransaction(String transactionProcessingStrategyCode, LoanTransaction loanTransaction,
             TransactionCtx ctx) {
         final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = getTransactionProcessor(
                 transactionProcessingStrategyCode);
+        if (loanRepaymentScheduleTransactionProcessor instanceof AdvancedPaymentScheduleTransactionProcessor advancedProcessor
+                && loanTransaction.getLoan().isInterestBearingAndInterestRecalculationEnabled()) {
+            return processLatestTransactionProgressiveInterestRecalculation(advancedProcessor, loanTransaction.getLoan(), loanTransaction);
+        }
         return loanRepaymentScheduleTransactionProcessor.processLatestTransaction(loanTransaction, ctx);
     }
 
