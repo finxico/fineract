@@ -110,6 +110,8 @@ final class ChargesApiResourceSwagger {
         public GetChargesAppliesToResponse chargeAppliesTo;
         public GetChargesCalculationTypeResponse chargeCalculationType;
         public GetChargesPaymentModeResponse chargePaymentMode;
+        public Double minCap;
+        public Double maxCap;
     }
 
     @Schema(description = "PostChargesRequest")
@@ -139,6 +141,10 @@ final class ChargesApiResourceSwagger {
         public String monthDayFormat;
         @Schema(example = "false")
         public boolean penalty;
+        @Schema(example = "23.43")
+        public Double minCap;
+        @Schema(example = "45.56")
+        public Double maxCap;
     }
 
     @Schema(description = "PostChargesResponse")
