@@ -68,6 +68,7 @@ public enum LoanTransactionType {
     INTEREST_REFUND(33, "loanTransactionType.interestRefund"), //
     ACCRUAL_ADJUSTMENT(34, "loanTransactionType.accrualAdjustment"), //
     CAPITALIZED_INCOME(35, "loanTransactionType.capitalizedIncome"), //
+    DAILY_AMORTIZATION(36, "loanTransactionType.dailyAmortization"), //
     ;
 
     private final Integer value;
@@ -119,6 +120,7 @@ public enum LoanTransactionType {
             case 33 -> LoanTransactionType.INTEREST_REFUND;
             case 34 -> LoanTransactionType.ACCRUAL_ADJUSTMENT;
             case 35 -> LoanTransactionType.CAPITALIZED_INCOME;
+            case 36 -> LoanTransactionType.DAILY_AMORTIZATION;
             default -> LoanTransactionType.INVALID;
         };
     }

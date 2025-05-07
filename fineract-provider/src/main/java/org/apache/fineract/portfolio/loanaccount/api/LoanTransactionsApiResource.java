@@ -528,6 +528,7 @@ public class LoanTransactionsApiResource {
             case interestRefund -> LoanTransactionType.INTEREST_REFUND;
             case accrualAdjustment -> LoanTransactionType.ACCRUAL_ADJUSTMENT;
             case capitalizedIncome -> LoanTransactionType.CAPITALIZED_INCOME;
+            case dailyAmortization -> LoanTransactionType.DAILY_AMORTIZATION;
             default ->
                 throw new InvalidLoanTransactionTypeException("transaction", transactionTypeParam.name(), "Unknown transaction type");
         };

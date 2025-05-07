@@ -312,6 +312,16 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
                 amount.getAmount(), null, null, null, null, false, paymentDetail, externalId);
     }
 
+    public static LoanTransaction dailyAmortization(final Loan loan, final Money amount, final LocalDate transactionDate,
+            final ExternalId externalId) {
+        return switch (loan.getLoanProductRelatedDetail().getCapitalizedIncomeType()) {
+            case FEE -> new LoanTransaction(loan, loan.getOffice(), LoanTransactionType.DAILY_AMORTIZATION, transactionDate,
+                    amount.getAmount(), null, null, amount.getAmount(), null, null, false, null, externalId);
+            case INTEREST -> new LoanTransaction(loan, loan.getOffice(), LoanTransactionType.DAILY_AMORTIZATION, transactionDate,
+                    amount.getAmount(), null, amount.getAmount(), null, null, null, false, null, externalId);
+        };
+    }
+
     public LoanTransaction copyTransactionPropertiesAndMappings() {
         LoanTransaction newTransaction = copyTransactionProperties(this);
         newTransaction.updateLoanTransactionToRepaymentScheduleMappings(loanTransactionToRepaymentScheduleMappings);
@@ -746,7 +756,8 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
                 || type == LoanTransactionType.ACCRUAL_ACTIVITY || type == LoanTransactionType.APPROVE_TRANSFER
                 || type == LoanTransactionType.INITIATE_TRANSFER || type == LoanTransactionType.REJECT_TRANSFER
                 || type == LoanTransactionType.WITHDRAW_TRANSFER || type == LoanTransactionType.CHARGE_OFF
-                || type == LoanTransactionType.REAMORTIZE || type == LoanTransactionType.REAGE);
+                || type == LoanTransactionType.REAMORTIZE || type == LoanTransactionType.REAGE
+                || type == LoanTransactionType.DAILY_AMORTIZATION);
     }
 
     public void updateOutstandingLoanBalance(BigDecimal outstandingLoanBalance) {
