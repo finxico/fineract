@@ -165,6 +165,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                     StatusEnum.CREATE.getValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(), loan.productId());
             // Trigger business event
             businessEventNotifierService.notifyPostBusinessEvent(new LoanCreatedBusinessEvent(loan));
+
+            // SOLICITUD ENVIADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
+
             // Building response
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -564,6 +567,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             businessEventNotifierService.notifyPostBusinessEvent(new LoanApprovedBusinessEvent(loan));
         }
 
+        // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
+
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
@@ -709,6 +714,10 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         }
 
         businessEventNotifierService.notifyPostBusinessEvent(new LoanRejectedBusinessEvent(loan));
+
+        // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
+        // loan.reject
+
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //

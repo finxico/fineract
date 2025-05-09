@@ -722,6 +722,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             CommandProcessingResult result = openSavingsAccount(client, fmt);
             clientRepository.saveAndFlush(client);
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
+
+            // CLIENTE APROVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
+
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
                     .withOfficeId(client.officeId()) //

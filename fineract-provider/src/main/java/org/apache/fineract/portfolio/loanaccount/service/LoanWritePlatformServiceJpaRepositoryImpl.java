@@ -342,6 +342,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
 
+        // CREDITO DESEMBOLSADO / ENVIAR AL EVENT BRIDGE
+
         List<Long> existingTransactionIds = new ArrayList<>();
         List<Long> existingReversedTransactionIds = new ArrayList<>();
 
