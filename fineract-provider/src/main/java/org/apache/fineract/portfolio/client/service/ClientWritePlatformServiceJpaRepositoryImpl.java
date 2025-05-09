@@ -95,11 +95,17 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.fineract.event.AwsEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.time.Instant;
+import java.util.Map;
 
 @AllArgsConstructor
 @Service
 @Slf4j
 public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWritePlatformService {
+    @Autowired
+    private AwsEventPublisher eventPublisher;
 
     private final PlatformSecurityContext context;
     private final ClientRepositoryWrapper clientRepository;
@@ -724,6 +730,12 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
 
             // CLIENTE APROVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
+            eventPublisher.publish(
+                    "fineract.client",
+                    "ClientActivated",
+                    Map.of("clientId", clientId, "activatedOn", Instant.now().toString())
+            );
+
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //

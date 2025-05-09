@@ -113,6 +113,8 @@ dependencies {
     implementation 'org.junit.jupiter:junit-jupiter-api'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.liquibase:liquibase-core'
+    implementation 'software.amazon.awssdk:eventbridge:2.20.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.5'
 }
 
 apply from: 'dependencies.gradle'

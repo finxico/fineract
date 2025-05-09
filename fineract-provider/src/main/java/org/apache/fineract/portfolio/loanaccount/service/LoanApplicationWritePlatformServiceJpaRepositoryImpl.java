@@ -97,10 +97,17 @@ import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.fineract.event.AwsEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.time.Instant;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
 public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements LoanApplicationWritePlatformService {
+
+    @Autowired
+    private AwsEventPublisher eventPublisher;
 
     private final PlatformSecurityContext context;
     private final LoanApplicationTransitionValidator loanApplicationTransitionValidator;
@@ -167,6 +174,13 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             businessEventNotifierService.notifyPostBusinessEvent(new LoanCreatedBusinessEvent(loan));
 
             // SOLICITUD ENVIADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
+
+            // 2) Solicitud de crédito enviada
+            eventPublisher.publish(
+                    "fineract.loan.apply.send",
+                    "LoanApplicationSubmitted",
+                    Map.of("applicationId", loan, "submittedOn", Instant.now().toString())
+            );
 
             // Building response
             return new CommandProcessingResultBuilder() //
@@ -568,6 +582,11 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         }
 
         // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
+        eventPublisher.publish(
+                "fineract.loan.apply.rejected",
+                "LoanApproved",
+                Map.of("applicationId", loanId, "approvedOn", Instant.now().toString())
+        );
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -717,7 +736,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
         // loan.reject
-
+        eventPublisher.publish(
+                "fineract.loan",
+                "LoanRejected",
+                Map.of("applicationId", loanId,
+                        "rejectedOn", Instant.now().toString())
+        );
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
