@@ -32,6 +32,7 @@ import com.google.gson.JsonObject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.resilience4j.retry.annotation.Retry;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -222,8 +223,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.Instant;
-import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -349,15 +348,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
 
         // CREDITO DESEMBOLSADO / ENVIAR AL EVENT BRIDGE
-    // 4) Crédito desembolsado
-        eventPublisher.publish(
-                "fineract.loan",
-                "LoanDisbursed",
-                Map.of("loanId", loanId,
-                        "disbursedOn", Instant.now().toString(),
-                        "amount", loan.getDisbursementDetails())
-        );
-
+        // 4) Crédito desembolsado
+        eventPublisher.publish("fineract.loan", "LoanDisbursed",
+                Map.of("loanId", loanId, "disbursedOn", Instant.now().toString(), "amount", loan.getDisbursementDetails()));
 
         List<Long> existingTransactionIds = new ArrayList<>();
         List<Long> existingReversedTransactionIds = new ArrayList<>();

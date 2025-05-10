@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.client.service;
 
 import com.google.gson.JsonElement;
 import jakarta.persistence.PersistenceException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -33,6 +34,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandProcessingService;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
+import org.apache.fineract.event.AwsEventPublisher;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormat;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormatRepositoryWrapper;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.EntityAccountType;
@@ -91,19 +93,17 @@ import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsApplicationProcessWritePlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.apache.fineract.event.AwsEventPublisher;
-import org.springframework.beans.factory.annotation.Autowired;
-import java.time.Instant;
-import java.util.Map;
 
 @AllArgsConstructor
 @Service
 @Slf4j
 public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWritePlatformService {
+
     @Autowired
     private AwsEventPublisher eventPublisher;
 
@@ -730,12 +730,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
 
             // CLIENTE APROVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            eventPublisher.publish(
-                    "fineract.client",
-                    "ClientActivated",
-                    Map.of("clientId", clientId, "activatedOn", Instant.now().toString())
-            );
-
+            eventPublisher.publish("fineract.client", "ClientActivated",
+                    Map.of("clientId", clientId, "activatedOn", Instant.now().toString()));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //

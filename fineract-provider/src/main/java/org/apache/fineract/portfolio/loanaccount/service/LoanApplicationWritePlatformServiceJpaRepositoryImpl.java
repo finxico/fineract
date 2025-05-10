@@ -25,6 +25,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import jakarta.persistence.PersistenceException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.fineract.event.AwsEventPublisher;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -94,13 +96,10 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.service.GSIMReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
-import org.apache.fineract.event.AwsEventPublisher;
-import org.springframework.beans.factory.annotation.Autowired;
-import java.time.Instant;
-import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -176,11 +175,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             // SOLICITUD ENVIADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
 
             // 2) Solicitud de crédito enviada
-            eventPublisher.publish(
-                    "fineract.loan.apply.send",
-                    "LoanApplicationSubmitted",
-                    Map.of("applicationId", loan, "submittedOn", Instant.now().toString())
-            );
+            eventPublisher.publish("fineract.loan.apply.send", "LoanApplicationSubmitted",
+                    Map.of("applicationId", loan, "submittedOn", Instant.now().toString()));
 
             // Building response
             return new CommandProcessingResultBuilder() //
@@ -582,11 +578,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         }
 
         // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish(
-                "fineract.loan.apply.rejected",
-                "LoanApproved",
-                Map.of("applicationId", loanId, "approvedOn", Instant.now().toString())
-        );
+        eventPublisher.publish("fineract.loan.apply.rejected", "LoanApproved",
+                Map.of("applicationId", loanId, "approvedOn", Instant.now().toString()));
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -736,12 +729,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
         // loan.reject
-        eventPublisher.publish(
-                "fineract.loan",
-                "LoanRejected",
-                Map.of("applicationId", loanId,
-                        "rejectedOn", Instant.now().toString())
-        );
+        eventPublisher.publish("fineract.loan", "LoanRejected", Map.of("applicationId", loanId, "rejectedOn", Instant.now().toString()));
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
