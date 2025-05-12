@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.client.service;
 
 import com.google.gson.JsonElement;
 import jakarta.persistence.PersistenceException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -33,6 +34,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandProcessingService;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
+import org.apache.fineract.event.AwsEventPublisher;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormat;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormatRepositoryWrapper;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.EntityAccountType;
@@ -91,15 +93,23 @@ import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsApplicationProcessWritePlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 @AllArgsConstructor
 @Service
 @Slf4j
 public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWritePlatformService {
+
+    @Autowired
+    private AwsEventPublisher eventPublisher;
 
     private final PlatformSecurityContext context;
     private final ClientRepositoryWrapper clientRepository;
@@ -335,6 +345,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             if (newClient.isActive()) {
                 businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(newClient));
             }
+
+            // CLIENTE CREADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
+            ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            eventPublisher.publish("arka.fineract", "client.created", mapper.convertValue(
+                    newClient,
+                    new TypeReference<Map<String, Object>>() {}
+            ));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -722,6 +739,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             CommandProcessingResult result = openSavingsAccount(client, fmt);
             clientRepository.saveAndFlush(client);
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
+
+            // CLIENTE APROVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
+            ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            eventPublisher.publish("arka.fineract", "client.activated", mapper.convertValue(
+                    client,
+                    new TypeReference<Map<String, Object>>() {}
+            ));
+
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
                     .withOfficeId(client.officeId()) //

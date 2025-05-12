@@ -113,6 +113,9 @@ dependencies {
     implementation 'org.junit.jupiter:junit-jupiter-api'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.liquibase:liquibase-core'
+    implementation 'software.amazon.awssdk:eventbridge:2.20.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
 }
 
 apply from: 'dependencies.gradle'
@@ -195,7 +198,7 @@ task dropDB {
 task createPGDB {
     description= "Creates the PostgreSQL Database. Needs database name to be passed (like: -PdbName=someDBname)"
     doLast {
-        def sql = Sql.newInstance( 'jdbc:postgresql://localhost:5432/', pgUser, pgPassword, 'org.postgresql.Driver' )
+        def sql = Sql.newInstance( 'jdbc:postgresql://localhost:5433/', pgUser, pgPassword, 'org.postgresql.Driver' )
         sql.execute( 'create database '+"$dbName" )
     }
 }
