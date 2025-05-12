@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.client.models.BatchResponse;
 import org.apache.fineract.client.models.GetJournalEntriesTransactionIdResponse;
-import org.apache.fineract.client.models.GetLoanAccountLockResponse;
 import org.apache.fineract.client.models.Header;
+import org.apache.fineract.client.models.LoanAccountLockResponseDTO;
 import retrofit2.Response;
 
 public final class ErrorMessageHelper {
@@ -121,6 +121,12 @@ public final class ErrorMessageHelper {
                 loanIdStr);
     }
 
+    public static String chargeOffUndoFailureDueToMonetaryActivityBefore(Long loanId) {
+        String loanIdStr = String.valueOf(loanId);
+        return String.format("Loan: %s charge-off cannot be executed. Loan has monetary activity after the charge-off transaction date!",
+                loanIdStr);
+    }
+
     public static String notChargedOffFailure(Long loanId) {
         String loanIdStr = String.valueOf(loanId);
         return String.format("Loan: %s is not charged-off", loanIdStr);
@@ -133,6 +139,10 @@ public final class ErrorMessageHelper {
     public static String addChargeForChargeOffLoanFailure(Long loanId) {
         String loanIdStr = String.valueOf(loanId);
         return String.format("Adding charge to Loan: %s is not allowed. Loan Account is Charged-off", loanIdStr);
+    }
+
+    public static String addCapitalizedIncomeExceedApprovedAmountFailure() {
+        return "Failed data validation due to: exceeds.approved.amount.";
     }
 
     public static String wrongAmountInRepaymentSchedule(int line, BigDecimal actual, BigDecimal expected) {
@@ -680,12 +690,12 @@ public final class ErrorMessageHelper {
                 expectedStr);
     }
 
-    public static String listOfLockedLoansNotEmpty(Response<GetLoanAccountLockResponse> response) {
+    public static String listOfLockedLoansNotEmpty(Response<LoanAccountLockResponseDTO> response) {
         String bodyStr = response.body().toString();
         return String.format("List of locked loan accounts is not empty. Actual response is: %n%s", bodyStr);
     }
 
-    public static String listOfLockedLoansContainsLoan(Long loanId, Response<GetLoanAccountLockResponse> response) {
+    public static String listOfLockedLoansContainsLoan(Long loanId, Response<LoanAccountLockResponseDTO> response) {
         String bodyStr = response.body().toString();
         return String.format("List of locked loan accounts contains the loan with loanId %s. List of locked loans: %n%s", loanId, bodyStr);
     }
@@ -891,5 +901,13 @@ public final class ErrorMessageHelper {
         return String.format(
                 "Number of lines in loan charge-off reason options is not correct. Actual value is: %d - Expected value is: %d", actual,
                 expected);
+    }
+
+    public static String wrongExternalID(String actual, String expected) {
+        return String.format("Wrong transaction External ID - %nActual value is: %s %nExpected value is: %s", actual, expected);
+    }
+
+    public static String wrongValueInTotalPages(Integer actual, Integer expected) {
+        return String.format("Wrong value for Total pages. %nActual value is: %s %nExpected value is: %s", actual, expected);
     }
 }
