@@ -25,6 +25,8 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.eventbridge.EventBridgeClient;
 import software.amazon.awssdk.services.eventbridge.EventBridgeClientBuilder;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 
 @Configuration
 public class AwsEventBridgeConfig {
@@ -32,8 +34,14 @@ public class AwsEventBridgeConfig {
     /**
      * Región AWS (p. ej. "mx-central-1").
      */
-    @Value("${spring.cloud.aws.region.static}")
+    @Value("${arka.aws.region}")
     private String awsRegion;
+
+    @Value("${arka.aws.credentials.access-key}")
+    private String accessKey;
+
+    @Value("${arka.aws.credentials.secret-key}")
+    private String secretKey;
 
     /**
      * Endpoint custom, deje vacío para AWS real.
@@ -43,12 +51,22 @@ public class AwsEventBridgeConfig {
 
     @Bean
     public EventBridgeClient eventBridgeClient() {
-        EventBridgeClientBuilder builder = EventBridgeClient.builder().region(Region.of(awsRegion));
-
-        if (awsEndpoint != null && !awsEndpoint.isBlank()) {
-            // Si estás apuntando a LocalStack u otro endpoint HTTP
-            builder.endpointOverride(URI.create(awsEndpoint));
+        if (accessKey == null || secretKey == null) {
+            throw new IllegalStateException(
+                    "Debes definir las variables de entorno MI_APP_AWS_ACCESS_KEY y MI_APP_AWS_SECRET_KEY"
+            );
         }
+
+        // Crea el proveedor de credenciales estático
+        var creds = AwsBasicCredentials.create(accessKey, secretKey);
+        var provider = StaticCredentialsProvider.create(creds);
+
+        EventBridgeClientBuilder builder = EventBridgeClient.builder().credentialsProvider(provider).region(Region.of(awsRegion));
+
+        //if (awsEndpoint != null && !awsEndpoint.isBlank()) {
+        //    // Si estás apuntando a LocalStack u otro endpoint HTTP
+        //    builder.endpointOverride(URI.create(awsEndpoint));
+        //}
 
         return builder.build();
     }

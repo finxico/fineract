@@ -37,7 +37,7 @@ public class AwsEventPublisher {
     private final String eventBusName;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public AwsEventPublisher(EventBridgeClient client, @Value("${aws.eventbus.name}") String eventBusName) {
+    public AwsEventPublisher(EventBridgeClient client, @Value("${arka.aws.eventbus.name}") String eventBusName) {
         this.client = client;
         this.eventBusName = eventBusName;
     }
@@ -59,6 +59,7 @@ public class AwsEventPublisher {
                     .detail(detailJson).build();
 
             client.putEvents(PutEventsRequest.builder().entries(entry).build());
+            LOG.debug("Evento creado exitosamente");
         } catch (JsonProcessingException e) {
             LOG.error("Error serializando payload del evento", e);
         } catch (Exception e) {

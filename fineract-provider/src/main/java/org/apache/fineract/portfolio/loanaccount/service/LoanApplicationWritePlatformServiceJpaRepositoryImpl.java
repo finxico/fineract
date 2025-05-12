@@ -100,6 +100,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -173,10 +177,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             businessEventNotifierService.notifyPostBusinessEvent(new LoanCreatedBusinessEvent(loan));
 
             // SOLICITUD ENVIADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
+            ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            eventPublisher.publish("arka.fineract", "loan.apply.submited", mapper.convertValue(
+                    loan,
+                    new TypeReference<Map<String, Object>>() {}
+            ));
 
-            // 2) Solicitud de crédito enviada
-            eventPublisher.publish("fineract.loan.apply.send", "LoanApplicationSubmitted",
-                    Map.of("applicationId", loan, "submittedOn", Instant.now().toString()));
 
             // Building response
             return new CommandProcessingResultBuilder() //
@@ -578,8 +584,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         }
 
         // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish("fineract.loan.apply.rejected", "LoanApproved",
-                Map.of("applicationId", loanId, "approvedOn", Instant.now().toString()));
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        eventPublisher.publish("arka.fineract", "loan.apply.approved", mapper.convertValue(
+                loan,
+                new TypeReference<Map<String, Object>>() {}
+        ));
+
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -728,8 +738,11 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         businessEventNotifierService.notifyPostBusinessEvent(new LoanRejectedBusinessEvent(loan));
 
         // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        // loan.reject
-        eventPublisher.publish("fineract.loan", "LoanRejected", Map.of("applicationId", loanId, "rejectedOn", Instant.now().toString()));
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        eventPublisher.publish("arka.fineract", "loan.apply.rejected", mapper.convertValue(
+                loan,
+                new TypeReference<Map<String, Object>>() {}
+        ));
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //

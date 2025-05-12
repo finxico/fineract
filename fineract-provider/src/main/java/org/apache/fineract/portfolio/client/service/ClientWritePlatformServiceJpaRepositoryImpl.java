@@ -98,6 +98,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 @AllArgsConstructor
 @Service
@@ -341,6 +345,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             if (newClient.isActive()) {
                 businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(newClient));
             }
+
+            // CLIENTE CREADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
+            ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            eventPublisher.publish("arka.fineract", "client.created", mapper.convertValue(
+                    newClient,
+                    new TypeReference<Map<String, Object>>() {}
+            ));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -730,8 +741,11 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
 
             // CLIENTE APROVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            eventPublisher.publish("fineract.client", "ClientActivated",
-                    Map.of("clientId", clientId, "activatedOn", Instant.now().toString()));
+            ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            eventPublisher.publish("arka.fineract", "client.activated", mapper.convertValue(
+                    client,
+                    new TypeReference<Map<String, Object>>() {}
+            ));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //

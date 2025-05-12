@@ -223,6 +223,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -348,9 +352,11 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
 
         // CREDITO DESEMBOLSADO / ENVIAR AL EVENT BRIDGE
-        // 4) Crédito desembolsado
-        eventPublisher.publish("fineract.loan", "LoanDisbursed",
-                Map.of("loanId", loanId, "disbursedOn", Instant.now().toString(), "amount", loan.getDisbursementDetails()));
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        eventPublisher.publish("arka.fineract", "loan.approved.disbursed", mapper.convertValue(
+                loan,
+                new TypeReference<Map<String, Object>>() {}
+        ));
 
         List<Long> existingTransactionIds = new ArrayList<>();
         List<Long> existingReversedTransactionIds = new ArrayList<>();
