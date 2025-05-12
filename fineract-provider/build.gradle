@@ -116,6 +116,9 @@ dependencies {
     implementation 'software.amazon.awssdk:eventbridge:2.20.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.15.2"
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.14.2'
+    implementation 'javax.persistence:javax.persistence-api:2.2'
 }
 
 apply from: 'dependencies.gradle'

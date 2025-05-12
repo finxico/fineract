@@ -107,6 +107,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -179,6 +180,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             // SOLICITUD ENVIADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
             ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            mapper.registerModule(new Hibernate5Module()
+                    .disable(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS));
+            mapper.disable(SerializationFeature.FAIL_ON_SELF_REFERENCES);
             eventPublisher.publish("arka.fineract", "loan.apply.submited", mapper.convertValue(
                     loan,
                     new TypeReference<Map<String, Object>>() {}
@@ -584,6 +588,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.registerModule(new Hibernate5Module()
+                .disable(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS));
+        mapper.disable(SerializationFeature.FAIL_ON_SELF_REFERENCES);
         eventPublisher.publish("arka.fineract", "loan.apply.approved", mapper.convertValue(
                 loan,
                 new TypeReference<Map<String, Object>>() {}
@@ -727,6 +734,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.registerModule(new Hibernate5Module()
+                .disable(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS));
+        mapper.disable(SerializationFeature.FAIL_ON_SELF_REFERENCES);
         eventPublisher.publish("arka.fineract", "loan.apply.rejected", mapper.convertValue(
                 loan,
                 new TypeReference<Map<String, Object>>() {}
