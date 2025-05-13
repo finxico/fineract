@@ -362,14 +362,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
 
         // CREDITO DESEMBOLSADO / ENVIAR AL EVENT BRIDGE
-        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        mapper.registerModule(new Hibernate5Module()
-                .disable(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS));
-        mapper.disable(SerializationFeature.FAIL_ON_SELF_REFERENCES);
-        eventPublisher.publish("arka.fineract", "loan.approved.disbursed", mapper.convertValue(
-                loan,
-                new TypeReference<Map<String, Object>>() {}
-        ));
+        eventPublisher.publish("arka.fineract", "loan.disbursed",
+                Map.of("loanId",loanId));
 
         List<Long> existingTransactionIds = new ArrayList<>();
         List<Long> existingReversedTransactionIds = new ArrayList<>();

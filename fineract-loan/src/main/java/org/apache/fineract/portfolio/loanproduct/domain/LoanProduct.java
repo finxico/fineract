@@ -143,11 +143,9 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
     private LoanProductTrancheDetails loanProductTrancheDetails;
 
     @Column(name = "start_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate startDate;
 
     @Column(name = "close_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate closeDate;
 
     @Column(name = "external_id", length = 100, unique = true)
