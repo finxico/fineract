@@ -1,0 +1,38 @@
+name: Build & Publish Docker image with PostgreSQL
+
+on:
+  push:
+    tags:
+      - '[1-9].*.*'
+
+env:
+  IMAGE_NAME: ghcr.io/finxico/fineract
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build & push with JIB
+        # Usamos el plugin JIB de Maven para compilar + docker push
+        run: |
+          mvn compile \
+            com.google.cloud.tools:jib-maven-plugin:3.3.1:build \
+            -Dimage=${{ env.IMAGE_NAME }} \
+            -Djib.to.tags=${{ github.ref_name }},latest \
+            -Djib.to.auth.username=${{ github.actor }} \
+            -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log success
+        run: echo "✔️ Imagen $IMAGE_NAME:${{ github.ref_name }} y :latest publicada en GHCR"
+
