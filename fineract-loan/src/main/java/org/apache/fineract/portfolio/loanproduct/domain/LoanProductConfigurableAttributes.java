@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.loanproduct.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -35,6 +36,7 @@ public class LoanProductConfigurableAttributes extends AbstractPersistableCustom
 
     @OneToOne
     @JoinColumn(name = "loan_product_id", nullable = false)
+    @JsonBackReference
     private LoanProduct loanProduct;
 
     @Column(name = "amortization_method_enum")

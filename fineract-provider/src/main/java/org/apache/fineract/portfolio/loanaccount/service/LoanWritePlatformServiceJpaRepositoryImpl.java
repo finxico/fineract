@@ -232,6 +232,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -361,11 +362,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
 
         // CREDITO DESEMBOLSADO / ENVIAR AL EVENT BRIDGE
-        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        eventPublisher.publish("arka.fineract", "loan.approved.disbursed", mapper.convertValue(
-                loan,
-                new TypeReference<Map<String, Object>>() {}
-        ));
+        eventPublisher.publish("arka.fineract", "loan.disbursed",
+                Map.of("loanId",loanId));
 
         List<Long> existingTransactionIds = new ArrayList<>();
         List<Long> existingReversedTransactionIds = new ArrayList<>();

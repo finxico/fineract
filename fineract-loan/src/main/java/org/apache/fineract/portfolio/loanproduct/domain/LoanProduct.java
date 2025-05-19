@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.loanproduct.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -68,6 +69,7 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanSchedul
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.exception.LoanProductGeneralRuleException;
 import org.apache.fineract.portfolio.rate.domain.Rate;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**
  * Loan products allow for categorisation of an organisations loans into something meaningful to them.
@@ -168,6 +170,7 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
     private LoanProductGuaranteeDetails loanProductGuaranteeDetails;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "loanProduct", orphanRemoval = true)
+    @JsonManagedReference
     private LoanProductConfigurableAttributes loanConfigurableAttributes;
 
     @Column(name = "principal_threshold_for_last_installment", scale = 2, precision = 5, nullable = false)

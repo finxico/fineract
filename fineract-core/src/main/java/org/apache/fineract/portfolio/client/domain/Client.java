@@ -89,11 +89,9 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private CodeValue subStatus;
 
     @Column(name = "activation_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate activationDate;
 
     @Column(name = "office_joining_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate officeJoiningDate;
 
     @Column(name = "firstname", length = 50)
@@ -124,7 +122,6 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private ExternalId externalId;
 
     @Column(name = "date_of_birth")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate dateOfBirth;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -147,7 +144,6 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private CodeValue closureReason;
 
     @Column(name = "closedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate closureDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -155,7 +151,6 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private CodeValue rejectionReason;
 
     @Column(name = "rejectedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate rejectionDate;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
@@ -167,7 +162,6 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private CodeValue withdrawalReason;
 
     @Column(name = "withdrawn_on_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate withdrawalDate;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
@@ -175,7 +169,6 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private AppUser withdrawnBy;
 
     @Column(name = "reactivated_on_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate reactivateDate;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
@@ -187,7 +180,6 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private AppUser closedBy;
 
     @Column(name = "submittedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate submittedOnDate;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
@@ -212,7 +204,6 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private Integer legalForm;
 
     @Column(name = "reopened_on_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate reopenedDate;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
@@ -220,7 +211,6 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private AppUser reopenedBy;
 
     @Column(name = "proposed_transfer_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate proposedTransferDate;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "client", orphanRemoval = true, fetch = FetchType.LAZY)

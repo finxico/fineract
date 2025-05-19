@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
+import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.google.gson.JsonElement;
 import jakarta.persistence.PersistenceException;
 import java.time.Instant;
@@ -347,11 +348,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             }
 
             // CLIENTE CREADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            eventPublisher.publish("arka.fineract", "client.created", mapper.convertValue(
-                    newClient,
-                    new TypeReference<Map<String, Object>>() {}
-            ));
+
+            eventPublisher.publish("arka.fineract", "client.created",
+                    Map.of("clientId", newClient.getId()));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -740,12 +739,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             clientRepository.saveAndFlush(client);
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
 
-            // CLIENTE APROVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            eventPublisher.publish("arka.fineract", "client.activated", mapper.convertValue(
-                    client,
-                    new TypeReference<Map<String, Object>>() {}
-            ));
+            // CLIENTE ACTIVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
+            eventPublisher.publish("arka.fineract", "client.activated",
+                    Map.of("clientId", clientId));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //

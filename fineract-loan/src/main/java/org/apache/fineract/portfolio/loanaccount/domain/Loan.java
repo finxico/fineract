@@ -21,6 +21,7 @@ package org.apache.fineract.portfolio.loanaccount.domain;
 import static org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleType.CUMULATIVE;
 import static org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleType.PROGRESSIVE;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -197,12 +198,10 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     // loan application states
     @Setter()
     @Column(name = "submittedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate submittedOnDate;
 
     @Setter()
     @Column(name = "rejectedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate rejectedOnDate;
 
     @Setter()
@@ -212,7 +211,6 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter()
     @Column(name = "withdrawnon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate withdrawnOnDate;
 
     @Setter()
@@ -222,7 +220,6 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter()
     @Column(name = "approvedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate approvedOnDate;
 
     @Setter()
@@ -232,12 +229,10 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter()
     @Column(name = "expected_disbursedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate expectedDisbursementDate;
 
     @Setter()
     @Column(name = "disbursedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate actualDisbursementDate;
 
     @Setter()
@@ -247,7 +242,6 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter()
     @Column(name = "closedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate closedOnDate;
 
     @Setter()
@@ -257,12 +251,10 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter
     @Column(name = "writtenoffon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate writtenOffOnDate;
 
     @Setter
     @Column(name = "rescheduledon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate rescheduledOnDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -271,22 +263,18 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter
     @Column(name = "expected_maturedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate expectedMaturityDate;
 
     @Setter()
     @Column(name = "maturedon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate actualMaturityDate;
 
     @Setter()
     @Column(name = "expected_firstrepaymenton_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate expectedFirstRepaymentOnDate;
 
     @Setter()
     @Column(name = "interest_calculated_from_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate interestChargedFromDate;
 
     @Column(name = "total_overpaid_derived", scale = 6, precision = 19)
@@ -294,7 +282,6 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter()
     @Column(name = "overpaidon_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate overpaidOnDate;
 
     @Column(name = "loan_counter")
@@ -321,6 +308,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @OrderBy(value = "installmentNumber")
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = new ArrayList<>();
 
     @OrderBy(value = "dateOf, createdDate, id")
@@ -373,7 +361,6 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter()
     @Column(name = "accrued_till")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate accruedTill;
 
     @Setter()
@@ -385,7 +372,6 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter
     @Column(name = "interest_recalcualated_on")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate interestRecalculatedOn;
 
     @Setter()
@@ -423,7 +409,6 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     @Setter()
     @Column(name = "last_closed_business_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate lastClosedBusinessDate;
 
     @Column(name = "is_charged_off", nullable = false)
@@ -434,7 +419,6 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     private CodeValue chargeOffReason;
 
     @Column(name = "charged_off_on_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private LocalDate chargedOffOnDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
