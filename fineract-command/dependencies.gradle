@@ -29,7 +29,7 @@ dependencies {
             'com.mysql:mysql-connector-j',
             'org.postgresql:postgresql',
 
-            'com.fasterxml.jackson.core:jackson-databind',
+            'com.fasterxml.jackson.core:jackson-databind:2.15.2',
 
             'com.google.guava:guava',
 
