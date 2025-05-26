@@ -1147,7 +1147,17 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 holidayDetailDto, isHolidayValidationDone);
         loan = loanTransaction.getLoan();
         this.loanAccountDomainService.updateAndSaveLoanCollateralTransactionsForIndividualAccounts(loan, loanTransaction);
-
+        // PAGO RECIBIDO / ENVIAR AL EVENT BRIDGE
+        eventPublisher.publish(
+                "arka.fineract",
+                "payment.received",
+                Map.of(
+                        "loanId", loanTransaction.getLoan().getId(),
+                        "clientId", loan.getClientId(),
+                        "amount",      transactionAmount,
+                        "transactionId", loanTransaction.getId()
+                )
+        );
         return new CommandProcessingResultBuilder().withCommandId(command.commandId()) //
                 .withLoanId(loan.getId()) //
                 .withEntityId(loanTransaction.getId()) //

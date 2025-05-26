@@ -582,7 +582,10 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
         eventPublisher.publish("arka.fineract", "loan.apply.approved",
-                Map.of("loanId",loanId));
+                Map.of(
+                        "loanId",loanId
+                )
+        );
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -720,14 +723,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         businessEventNotifierService.notifyPostBusinessEvent(new LoanRejectedBusinessEvent(loan));
 
         // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        mapper.registerModule(new Hibernate5Module()
-                .disable(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS));
-        mapper.disable(SerializationFeature.FAIL_ON_SELF_REFERENCES);
-        eventPublisher.publish("arka.fineract", "loan.apply.rejected", mapper.convertValue(
-                loan,
-                new TypeReference<Map<String, Object>>() {}
-        ));
+        eventPublisher.publish("arka.fineract", "loan.apply.rejected",
+                Map.of("loanId",loanId));
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
