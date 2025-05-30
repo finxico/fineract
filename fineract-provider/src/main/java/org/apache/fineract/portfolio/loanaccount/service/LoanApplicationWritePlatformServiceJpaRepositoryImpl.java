@@ -180,8 +180,14 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             // SOLICITUD ENVIADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
 
-            eventPublisher.publish("arka.fineract", "loan.apply.submited",
-                    Map.of("loanId",loan.getId()));
+            eventPublisher.publish(
+                    "arka.fineract",
+                    "loan.apply.submited",
+                    Map.of(
+                            "loanId", loan.getId(),
+                            "clientId", loan.getClientId()
+                    )
+            );
 
             // Building response
             return new CommandProcessingResultBuilder() //
@@ -723,8 +729,14 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         businessEventNotifierService.notifyPostBusinessEvent(new LoanRejectedBusinessEvent(loan));
 
         // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish("arka.fineract", "loan.apply.rejected",
-                Map.of("loanId",loanId));
+        eventPublisher.publish(
+                "arka.fineract",
+                "loan.apply.rejected",
+                Map.of(
+                        "loanId", loanId,
+                        "clientId", loan.getClientId()
+                )
+        );
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
