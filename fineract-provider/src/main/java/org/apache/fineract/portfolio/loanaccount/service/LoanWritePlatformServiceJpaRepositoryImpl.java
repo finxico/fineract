@@ -362,8 +362,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
 
         // CREDITO DESEMBOLSADO / ENVIAR AL EVENT BRIDGE
-        eventPublisher.publish("arka.fineract", "loan.disbursed",
-                Map.of("loanId",loanId));
+        eventPublisher.publish(
+                "arka.fineract",
+                "loan.disbursed",
+                Map.of(
+                        "loanId", loan.getId(),
+                        "clientId", loan.getClientId()
+                )
+        );
 
         List<Long> existingTransactionIds = new ArrayList<>();
         List<Long> existingReversedTransactionIds = new ArrayList<>();
@@ -1150,7 +1156,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         // PAGO RECIBIDO / ENVIAR AL EVENT BRIDGE
         eventPublisher.publish(
                 "arka.fineract",
-                "payment.received",
+                "loan.payment.received",
                 Map.of(
                         "loanId", loanTransaction.getLoan().getId(),
                         "clientId", loan.getClientId(),

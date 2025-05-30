@@ -348,9 +348,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             }
 
             // CLIENTE CREADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-
-            eventPublisher.publish("arka.fineract", "client.created",
-                    Map.of("clientId", newClient.getId()));
+            eventPublisher.publish(
+                    "arka.fineract",
+                    "client.created",
+                    Map.of(
+                            "clientId", newClient.getId()
+                    )
+            );
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -740,8 +744,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
 
             // CLIENTE ACTIVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            eventPublisher.publish("arka.fineract", "client.activated",
-                    Map.of("clientId", clientId));
+            eventPublisher.publish(
+                    "arka.fineract",
+                    "client.activated",
+                    Map.of(
+                            "clientId", clientId
+                    )
+            );
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -1003,6 +1012,16 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         client.reject(currentUser, rejectionReason, rejectionDate);
         clientRepository.saveAndFlush(client);
         businessEventNotifierService.notifyPostBusinessEvent(new ClientRejectBusinessEvent(client));
+
+        // CLIENTE RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
+        eventPublisher.publish(
+            "arka.fineract",
+            "client.rejected",
+            Map.of(
+                "clientId", client.getId()
+            )
+        );
+
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withClientId(entityId) //

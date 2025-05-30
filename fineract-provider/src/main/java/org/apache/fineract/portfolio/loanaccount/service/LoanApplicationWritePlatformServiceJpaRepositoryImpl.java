@@ -587,12 +587,15 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         }
 
         // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish("arka.fineract", "loan.apply.approved",
-                Map.of(
-                        "loanId",loanId
-                )
+        eventPublisher.publish(
+            "arka.fineract",
+            "loan.apply.approved",
+            Map.of(
+                "loanId", loanId,
+                "clientId", loan.getClientId()
+            )
         );
-
+        approved
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
