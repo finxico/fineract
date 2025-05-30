@@ -1156,7 +1156,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         // PAGO RECIBIDO / ENVIAR AL EVENT BRIDGE
         eventPublisher.publish(
                 "arka.fineract",
-                "loan.payment.received",
+                "loan.repayment.make",
                 Map.of(
                         "loanId", loanTransaction.getLoan().getId(),
                         "clientId", loan.getClientId(),

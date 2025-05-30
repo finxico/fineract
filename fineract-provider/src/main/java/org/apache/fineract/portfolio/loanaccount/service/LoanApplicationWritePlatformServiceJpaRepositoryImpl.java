@@ -595,7 +595,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 "clientId", loan.getClientId()
             )
         );
-        approved
+
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
