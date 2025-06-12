@@ -1,0 +1,47 @@
+name: Build & Publish OAuth Docker image
+
+on:
+  push:
+    tags:
+      - 'oauth-[1-9].*.*'
+
+env:
+  IMAGE_NAME: ghcr.io/finxico/fineract-oauth
+
+permissions:
+  contents: read
+  packages: write
+jobs:
+  build-and-publish-oauth:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+          cache-dependency-path: '**/build.gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b # v4.3.0
+
+      - name: Build OAuth JAR
+        run: |
+          ./gradlew --no-daemon --console=plain :fineract-provider:bootJar -Psecurity=oauth
+
+      - name: Build & push OAuth image with Jib
+        run: |
+          ./gradlew --no-daemon --console=plain :fineract-provider:jib -x test -x cucumber \
+            -Djib.to.auth.username=${{ github.actor }} \
+            -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
+            -Djib.from.platforms=linux/amd64,linux/arm64 \
+            -Djib.to.image=${{ env.IMAGE_NAME }} \
+            -Djib.to.tags=${{ github.ref_name }},latest
+
+      - name: Log success
+        run: echo "✔️ Imagen OAuth $IMAGE_NAME:oaut-${{ github.ref_name }} y :oaut-latest publicada en GHCR"
