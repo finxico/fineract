@@ -61,14 +61,19 @@ public class EmbeddableProgressiveLoanScheduleGenerator {
         }
 
         @Override
-        public String writeInterestScheduleModel(Loan loan, ProgressiveLoanInterestScheduleModel model) {
-            return "";
+        public ProgressiveLoanInterestScheduleModel writeInterestScheduleModel(Loan loan, ProgressiveLoanInterestScheduleModel model) {
+            return null;
         }
 
         @Override
         public Optional<ProgressiveLoanInterestScheduleModel> readProgressiveLoanInterestScheduleModel(Long loanId,
                 LoanProductMinimumRepaymentScheduleRelatedDetail detail, Integer installmentAmountInMultipliesOf) {
             return Optional.empty();
+        }
+
+        @Override
+        public boolean hasValidModelForDate(Long loanId, LocalDate targetDate) {
+            return false;
         }
 
         @Override
