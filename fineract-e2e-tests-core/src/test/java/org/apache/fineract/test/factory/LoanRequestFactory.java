@@ -21,8 +21,11 @@ package org.apache.fineract.test.factory;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.apache.fineract.client.models.DisbursementDetail;
 import org.apache.fineract.client.models.InterestPauseRequestDto;
+import org.apache.fineract.client.models.PostAddAndDeleteDisbursementDetailRequest;
 import org.apache.fineract.client.models.PostCreateRescheduleLoansRequest;
 import org.apache.fineract.client.models.PostLoansLoanIdChargesChargeIdRequest;
 import org.apache.fineract.client.models.PostLoansLoanIdRequest;
@@ -183,6 +186,12 @@ public class LoanRequestFactory {
                 .paymentTypeId(Math.toIntExact(DEFAULT_PAYMENT_TYPE_ID)).dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
     }
 
+    public static PostAddAndDeleteDisbursementDetailRequest defaultLoanDisbursementDetailRequest(
+            List<DisbursementDetail> disbursementData) {
+        return new PostAddAndDeleteDisbursementDetailRequest().disbursementData(disbursementData).dateFormat(DATE_FORMAT)
+                .locale(DEFAULT_LOCALE);
+    }
+
     public static PostLoansLoanIdTransactionsRequest defaultPaymentTransactionRequest() {
         return new PostLoansLoanIdTransactionsRequest().transactionDate(DEFAULT_TRANSACTION_DATE)
                 .transactionAmount(DEFAULT_PAYMENT_TRANSACTION_AMOUNT).paymentTypeId(DEFAULT_PAYMENT_TYPE_ID).dateFormat(DATE_FORMAT)
@@ -202,6 +211,11 @@ public class LoanRequestFactory {
     }
 
     public static PostLoansLoanIdTransactionsTransactionIdRequest defaultRepaymentUndoRequest() {
+        return new PostLoansLoanIdTransactionsTransactionIdRequest().transactionDate(DEFAULT_TRANSACTION_DATE)
+                .transactionAmount(DEFAULT_UNDO_TRANSACTION_AMOUNT).dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
+    }
+
+    public static PostLoansLoanIdTransactionsTransactionIdRequest defaultCapitalizedIncomeAdjustmentUndoRequest() {
         return new PostLoansLoanIdTransactionsTransactionIdRequest().transactionDate(DEFAULT_TRANSACTION_DATE)
                 .transactionAmount(DEFAULT_UNDO_TRANSACTION_AMOUNT).dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
     }
@@ -289,5 +303,9 @@ public class LoanRequestFactory {
     public static PostLoansLoanIdTransactionsRequest defaultCapitalizedIncomeRequest() {
         return new PostLoansLoanIdTransactionsRequest().transactionDate(DEFAULT_TRANSACTION_DATE).dateFormat(DATE_FORMAT)
                 .locale(DEFAULT_LOCALE).note("Capitalized Income");
+    }
+
+    public static PostLoansLoanIdRequest defaultLoanContractTerminationRequest() {
+        return new PostLoansLoanIdRequest().dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE).note("Contract Termination");
     }
 }

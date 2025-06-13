@@ -34,7 +34,11 @@ public enum TransactionType {
     CHARGE_ADJUSTMENT("chargeAdjustment"), //
     INTEREST_PAYMENT_WAIVER("interestPaymentWaiver"), //
     REPAYMENT_AT_DISBURSEMENT("repaymentAtDisbursement"), //
-    CAPITALIZED_INCOME("capitalizedIncome"),;
+    CAPITALIZED_INCOME("capitalizedIncome"), //
+    CAPITALIZED_INCOME_AMORTIZATION("capitalizedIncomeAmortization"), //
+    CAPITALIZED_INCOME_ADJUSTMENT("capitalizedIncomeAdjustment"), //
+    CAPITALIZED_INCOME_AMORTIZATION_ADJUSTMENT("capitalizedIncomeAmortizationAdjustment"), //
+    ;
 
     public final String value;
 

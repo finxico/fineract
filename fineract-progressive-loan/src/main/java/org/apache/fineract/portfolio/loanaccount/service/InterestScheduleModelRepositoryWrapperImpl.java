@@ -18,14 +18,13 @@
  */
 package org.apache.fineract.portfolio.loanaccount.service;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.FlushModeType;
-import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.apache.fineract.infrastructure.core.persistence.FlushModeHandler;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
@@ -47,18 +46,16 @@ public class InterestScheduleModelRepositoryWrapperImpl implements InterestSched
     private final ProgressiveLoanModelRepository loanModelRepository;
     private final ProgressiveLoanInterestScheduleModelParserService progressiveLoanInterestScheduleModelParserService;
     private final AdvancedPaymentScheduleTransactionProcessor advancedPaymentScheduleTransactionProcessor;
-    @PersistenceContext
-    private final EntityManager entityManager;
+    private final FlushModeHandler flushModeHandler;
 
     @Transactional
     @Override
-    public String writeInterestScheduleModel(Loan loan, ProgressiveLoanInterestScheduleModel model) {
+    public ProgressiveLoanInterestScheduleModel writeInterestScheduleModel(Loan loan, ProgressiveLoanInterestScheduleModel model) {
         if (model == null) {
             return null;
         }
         String jsonModel = progressiveLoanInterestScheduleModelParserService.toJson(model);
-        try {
-            entityManager.setFlushMode(FlushModeType.COMMIT);
+        flushModeHandler.withFlushMode(FlushModeType.COMMIT, () -> {
             ProgressiveLoanModel progressiveLoanModel = loanModelRepository.findOneByLoanId(loan.getId()).orElseGet(() -> {
                 ProgressiveLoanModel plm = new ProgressiveLoanModel();
                 plm.setLoan(loan);
@@ -68,15 +65,17 @@ public class InterestScheduleModelRepositoryWrapperImpl implements InterestSched
             progressiveLoanModel.setLastModifiedDate(DateUtils.getAuditOffsetDateTime());
             progressiveLoanModel.setJsonModel(jsonModel);
             loanModelRepository.save(progressiveLoanModel);
-        } finally {
-            entityManager.setFlushMode(FlushModeType.AUTO);
-        }
-        return jsonModel;
+        });
+        return model;
     }
 
     @Override
     public Optional<ProgressiveLoanModel> findOneByLoanId(Long loanId) {
-        return loanModelRepository.findOneByLoanId(loanId);
+        final Optional[] progressiveLoanModel = new Optional[1];
+        flushModeHandler.withFlushMode(FlushModeType.COMMIT, () -> {
+            progressiveLoanModel[0] = loanModelRepository.findOneByLoanId(loanId);
+        });
+        return progressiveLoanModel[0];
     }
 
     @Override
@@ -84,7 +83,14 @@ public class InterestScheduleModelRepositoryWrapperImpl implements InterestSched
         return progressiveLoanModel.map(ProgressiveLoanModel::getJsonModel) //
                 .map(jsonModel -> progressiveLoanInterestScheduleModelParserService.fromJson(jsonModel,
                         progressiveLoanModel.get().getLoan().getLoanProductRelatedDetail(), MoneyHelper.getMathContext(),
-                        progressiveLoanModel.get().getLoan().getLoanProduct().getInstallmentAmountInMultiplesOf()));
+                        progressiveLoanModel.get().getLoan().getLoanProductRelatedDetail().getInstallmentAmountInMultiplesOf()));
+    }
+
+    @Override
+    public boolean hasValidModelForDate(Long loanId, LocalDate targetDate) {
+        Optional<ProgressiveLoanModel> progressiveLoanModel = findOneByLoanId(loanId);
+        LocalDate modelUpdatedTilDate = progressiveLoanModel.map(ProgressiveLoanModel::getBusinessDate).orElse(null);
+        return progressiveLoanModel.isPresent() && !targetDate.isBefore(modelUpdatedTilDate);
     }
 
     @Override
@@ -93,10 +99,11 @@ public class InterestScheduleModelRepositoryWrapperImpl implements InterestSched
         Optional<ProgressiveLoanInterestScheduleModel> savedModel;
         if (progressiveLoanModel.isPresent() && !progressiveLoanModel.get().getBusinessDate().isAfter(businessDate)) {
             savedModel = extractModel(progressiveLoanModel);
-            if (progressiveLoanModel.get().getBusinessDate().isBefore(businessDate) && savedModel.isPresent()) {
+            if (savedModel.isPresent() && progressiveLoanModel.get().getBusinessDate().isBefore(businessDate)) {
                 ProgressiveTransactionCtx ctx = new ProgressiveTransactionCtx(loan.getCurrency(), loan.getRepaymentScheduleInstallments(),
                         Set.of(), new MoneyHolder(loan.getTotalOverpaidAsMoney()), new ChangedTransactionDetail(), savedModel.get());
                 ctx.setChargedOff(loan.isChargedOff());
+                ctx.setContractTerminated(loan.isContractTermination());
                 advancedPaymentScheduleTransactionProcessor.recalculateInterestForDate(businessDate, ctx);
             }
         } else {

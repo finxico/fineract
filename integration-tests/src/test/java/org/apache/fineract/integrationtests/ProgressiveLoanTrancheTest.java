@@ -20,9 +20,9 @@ package org.apache.fineract.integrationtests;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.fineract.client.models.DisbursementDetail;
 import org.apache.fineract.client.models.GetLoansLoanIdDisbursementDetails;
 import org.apache.fineract.client.models.GetLoansLoanIdResponse;
 import org.apache.fineract.client.models.PostClientsResponse;
@@ -46,8 +46,8 @@ public class ProgressiveLoanTrancheTest extends BaseLoanIntegrationTest {
 
         runAt("20 December 2024", () -> {
             Long loanId = applyAndApproveProgressiveLoan(client.getClientId(), loanProductsResponse.getResourceId(), "20 December 2024",
-                    500.0, 7.0, 6, (request) -> request.disbursementData(
-                            List.of(new PostLoansDisbursementData().expectedDisbursementDate("20 December 2024").principal(100.0))));
+                    500.0, 7.0, 6, (request) -> request.disbursementData(List.of(new PostLoansDisbursementData()
+                            .expectedDisbursementDate("20 December 2024").principal(BigDecimal.valueOf(100.0)))));
 
             loanIdRef.set(loanId);
 
@@ -64,15 +64,14 @@ public class ProgressiveLoanTrancheTest extends BaseLoanIntegrationTest {
 
             final GetLoansLoanIdResponse loanDetails = loanTransactionHelper.getLoanDetails(loanId);
 
-            List<HashMap> tranches = new ArrayList<>();
+            ArrayList<DisbursementDetail> disbursementDetails = new ArrayList<>();
             for (GetLoansLoanIdDisbursementDetails disbursementDetail : loanDetails.getDisbursementDetails()) {
-                tranches.add(loanTransactionHelper.createTrancheDetail(disbursementDetail.getId().toString(),
-                        dateTimeFormatter.format(disbursementDetail.getExpectedDisbursementDate()),
-                        disbursementDetail.getPrincipal().toString()));
+                disbursementDetails.add(new DisbursementDetail().id(disbursementDetail.getId()).principal(disbursementDetail.getPrincipal())
+                        .expectedDisbursementDate(dateTimeFormatter.format(disbursementDetail.getExpectedDisbursementDate())));
             }
-            tranches.add(loanTransactionHelper.createTrancheDetail(null, "20 January 2025", "100"));
+            disbursementDetails.add(new DisbursementDetail().expectedDisbursementDate("20 January 2025").principal(100.0));
 
-            loanTransactionHelper.addAndDeleteDisbursementDetail(loanId.intValue(), "500", "20 December 2024", tranches, "");
+            loanTransactionHelper.addAndDeleteDisbursementDetail(loanId, disbursementDetails);
 
             disburseLoan(loanId, BigDecimal.valueOf(100), "20 January 2025");
         });
