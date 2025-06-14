@@ -6,7 +6,7 @@ on:
       - 'oauth-[1-9].*.*'
 
 env:
-  IMAGE_NAME: ghcr.io/finxico/fineract-oauth
+  IMAGE_NAME: ghcr.io/finxico/fineract
 
 permissions:
   contents: read
