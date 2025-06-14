@@ -38,6 +38,8 @@ jobs:
             -Djib.from.platforms=linux/amd64,linux/arm64 \
             -Djib.to.image=${IMAGE_NAME} \
             -Djib.to.tags=${{ github.ref_name }},latest
+            -Djib.httpTimeout=300000 \
+            -Djib.containerizingTimeout=600000
 
       - name: Log success
         run: echo "✔️ Imagen $IMAGE_NAME:${{ github.ref_name }} y :latest publicada en GHCR"

@@ -42,6 +42,8 @@ jobs:
             -Djib.from.platforms=linux/amd64,linux/arm64 \
             -Djib.to.image=${{ env.IMAGE_NAME }} \
             -Djib.to.tags=${{ github.ref_name }},latest
+            -Djib.httpTimeout=300000 \
+            -Djib.containerizingTimeout=600000
 
       - name: Log success
         run: echo "✔️ Imagen OAuth $IMAGE_NAME:oaut-${{ github.ref_name }} y :oaut-latest publicada en GHCR"
