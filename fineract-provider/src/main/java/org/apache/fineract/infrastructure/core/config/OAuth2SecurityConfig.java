@@ -170,7 +170,8 @@ public class OAuth2SecurityConfig {
     private Converter<Jwt, FineractJwtAuthenticationToken> authenticationConverter() {
         return jwt -> {
             try {
-                UserDetails user = userDetailsService.loadUserByUsername(jwt.getSubject());
+                String username = jwt.getClaimAsString("username");
+                UserDetails user = userDetailsService.loadUserByUsername(username);
                 jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
                 Collection<GrantedAuthority> authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
                 return new FineractJwtAuthenticationToken(jwt, authorities, user);
