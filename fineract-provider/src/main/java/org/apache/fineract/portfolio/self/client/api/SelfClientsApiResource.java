@@ -100,7 +100,7 @@ public class SelfClientsApiResource {
         final String hierarchy = null;
         final Boolean orphansOnly = null;
         return this.clientApiResource.retrieveAll(uriInfo, officeId, externalId, displayName, firstname, lastname, status, legalForm,
-                hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, true);
+                hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, true, null);
     }
 
     @GET
