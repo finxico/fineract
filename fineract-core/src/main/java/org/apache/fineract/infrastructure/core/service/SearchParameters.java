@@ -39,6 +39,7 @@ public class SearchParameters {
     private String lastname;
     private String status;
     private Integer offset;
+    private String advancedQuery;
     @Getter(AccessLevel.NONE)
     private Integer limit;
     private String orderBy;

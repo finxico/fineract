@@ -152,6 +152,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final String firstname = searchParameters.getFirstname();
         final String lastname = searchParameters.getLastname();
         final String status = searchParameters.getStatus();
+        final String advancedQuery = searchParameters.getAdvancedQuery();
 
         String extraCriteria = "";
         if (officeId != null) {
@@ -198,6 +199,26 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         if (searchParameters.hasLegalForm()) {
             paramList.add(searchParameters.getLegalForm());
             extraCriteria += " and c.legal_form_enum = ? ";
+        }
+
+        // Lógica definitiva para búsqueda avanzada con campos corregidos
+        if (advancedQuery != null && !advancedQuery.trim().isEmpty()) {
+            String query = "%" + advancedQuery.trim() + "%";
+
+            extraCriteria += " and ("
+                    + "unaccent(c.display_name) ILIKE unaccent(?) OR "
+                    + "c.email_address ILIKE ? OR "
+                    + "c.mobile_no ILIKE ? OR "
+                    + "cast(c.id as text) = ? OR "
+                    + "c.account_no ILIKE ? OR "
+                    + "c.external_id ILIKE ?) ";
+
+            paramList.add(query); // display_name
+            paramList.add(query); // email_address
+            paramList.add(query); // mobile_no
+            paramList.add(advancedQuery.trim()); // id (exact match)
+            paramList.add(query); // account_no
+            paramList.add(query); // external_id
         }
 
         if (StringUtils.isNotBlank(extraCriteria)) {
