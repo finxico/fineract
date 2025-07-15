@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
+import org.apache.fineract.event.AwsEventPublisher;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -59,6 +60,7 @@ import org.apache.fineract.useradministration.domain.UserDomainService;
 import org.apache.fineract.useradministration.exception.PasswordPreviouslyUsedException;
 import org.apache.fineract.useradministration.exception.RoleNotFoundException;
 import org.apache.fineract.useradministration.exception.UserNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -72,6 +74,9 @@ import org.springframework.util.ObjectUtils;
 @Slf4j
 @RequiredArgsConstructor
 public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWritePlatformService {
+
+    @Autowired
+    private AwsEventPublisher eventPublisher;
 
     private final PlatformSecurityContext context;
     private final UserDomainService userDomainService;
@@ -129,6 +134,17 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
 
             final Boolean sendPasswordToEmail = command.booleanObjectValueOfParameterNamed("sendPasswordToEmail");
             this.userDomainService.create(appUser, sendPasswordToEmail);
+
+            log.info("[EVENT] Publicando 'user.created' en el bus, userId={}",  appUser.getId());
+            // USUARIO CREADO
+            eventPublisher.publish(
+                    "arka.fineract",
+                    "user.created",
+                    Map.of(
+                            "userId",  appUser.getId()
+                    )
+            );
+
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -309,6 +325,16 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
 
         user.delete();
         this.appUserRepository.save(user);
+
+        log.info("[EVENT] Publicando 'user.deleted'  userId={}",  userId);
+        // USARIO BORRADO
+        eventPublisher.publish(
+                "arka.fineract",
+                "user.deleted",
+                Map.of(
+                        "userId", userId
+                )
+        );
 
         return new CommandProcessingResultBuilder().withEntityId(userId).withOfficeId(user.getOffice().getId()).build();
     }
