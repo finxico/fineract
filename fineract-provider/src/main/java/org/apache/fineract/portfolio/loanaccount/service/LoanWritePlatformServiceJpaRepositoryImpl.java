@@ -3313,10 +3313,29 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
                 loan.setClosedOnDate(closureDate);
                 final LoanStatus statusEnum = loanLifecycleStateMachine.dryTransition(LoanEvent.REPAID_IN_FULL, loan);
-                if (!statusEnum.hasStateOf(loan.getStatus())) {
-                    loanLifecycleStateMachine.transition(LoanEvent.REPAID_IN_FULL, loan);
-                    changes.put(PARAM_STATUS, LoanEnumerations.status(loan.getLoanStatus()));
-                }
+                    if (!statusEnum.hasStateOf(loan.getStatus())) {
+                        if (loan.getStatus().isClosedObligationsMet()) {
+                            eventPublisher.publish(
+                                "arka.fineract",
+                                "loan.closed.obligations_met", // 600
+                                Map.of(
+                                    "loanId", loan.getId(),
+                                    "clientId", loan.getClientId(),
+                                    "statusCode", 600
+                                )
+                            );
+                        } else if (loan.getStatus().isOverpaid()) {
+                            eventPublisher.publish(
+                                "arka.fineract",
+                                "loan.closed.overpaid", // 700
+                                Map.of(
+                                    "loanId", loan.getId(),
+                                    "clientId", loan.getClientId(),
+                                    "statusCode", 700
+                                )
+                            );
+                        }
+                    }
                 changes.put("externalId", externalId);
                 loanTransaction = LoanTransaction.writeoff(loan, loan.getOffice(), closureDate, externalId);
                 final boolean isLastTransaction = loanTransactionRepository.isChronologicallyLatest(loanTransaction.getTransactionDate(),
@@ -3347,10 +3366,29 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 // has 'overpaid' amount
                 loan.setClosedOnDate(closureDate);
                 final LoanStatus statusEnum = loanLifecycleStateMachine.dryTransition(LoanEvent.REPAID_IN_FULL, loan);
-                if (!statusEnum.hasStateOf(loan.getStatus())) {
-                    loanLifecycleStateMachine.transition(LoanEvent.REPAID_IN_FULL, loan);
-                    changes.put(PARAM_STATUS, LoanEnumerations.status(loan.getLoanStatus()));
-                }
+                    if (!statusEnum.hasStateOf(loan.getStatus())) {
+                        if (loan.getStatus().isClosedObligationsMet()) {
+                            eventPublisher.publish(
+                                "arka.fineract",
+                                "loan.closed.obligations_met", // 600
+                                Map.of(
+                                    "loanId", loan.getId(),
+                                    "clientId", loan.getClientId(),
+                                    "statusCode", 600
+                                )
+                            );
+                        } else if (loan.getStatus().isOverpaid()) {
+                            eventPublisher.publish(
+                                "arka.fineract",
+                                "loan.closed.overpaid", // 700
+                                Map.of(
+                                    "loanId", loan.getId(),
+                                    "clientId", loan.getClientId(),
+                                    "statusCode", 700
+                                )
+                            );
+                        }
+                    }
             } else if (totalLoanOverpayment.isGreaterThanZero()) {
                 final String errorMessage = "The loan is marked as 'Overpaid' and cannot be moved to 'Closed (obligations met).";
                 throw new InvalidLoanStateTransitionException("close", "loan.is.overpaid", errorMessage, totalLoanOverpayment.toString());
