@@ -1168,6 +1168,25 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                         "transactionId", loanTransaction.getId()
                 )
         );
+        if (loan.getStatus().isClosedObligationsMet()) {
+            eventPublisher.publish("arka.fineract", "loan.closed.obligations.met",
+                Map.of(
+                    "loanId", loan.getId(),
+                    "clientId", loan.getClientId(),
+                    "transactionId", loanTransaction.getId(),
+                    "statusCode", 600
+                )
+            );
+        } else if (loan.getStatus().isOverpaid()) {
+            eventPublisher.publish("arka.fineract", "loan.overpaid",
+                Map.of(
+                    "loanId", loan.getId(),
+                    "clientId", loan.getClientId(),
+                    "transactionId", loanTransaction.getId(),
+                    "statusCode", 700
+                )
+            );
+        }
         return new CommandProcessingResultBuilder().withCommandId(command.commandId()) //
                 .withLoanId(loan.getId()) //
                 .withEntityId(loanTransaction.getId()) //
