@@ -217,64 +217,16 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
                 loanTransaction.resetDerivedComponents();
                 handleRefund(loanTransaction, currency, installments, charges);
             } else if (loanTransaction.isCreditBalanceRefund()) {
-                recalculateCreditTransaction(changedTransactionDetail, loanTransaction, currency, installments, transactionsToBeProcessed,
-                        overpaymentHolder);
+                recalculateCreditTransaction(changedTransactionDetail, loanTransaction, currency, installments, overpaymentHolder);
             } else if (loanTransaction.isChargeback()) {
-                recalculateCreditTransaction(changedTransactionDetail, loanTransaction, currency, installments, transactionsToBeProcessed,
-                        overpaymentHolder);
+                recalculateCreditTransaction(changedTransactionDetail, loanTransaction, currency, installments, overpaymentHolder);
                 reprocessChargebackTransactionRelation(changedTransactionDetail, transactionsToBeProcessed);
             } else if (loanTransaction.isChargeOff()) {
                 recalculateChargeOffTransaction(changedTransactionDetail, loanTransaction, currency, installments);
-            } else if (loanTransaction.isAccrualActivity()) {
-                recalculateAccrualActivityTransaction(changedTransactionDetail, loanTransaction, currency, installments);
             }
         }
         reprocessInstallments(disbursementDate, transactionsToBeProcessed, installments, currency);
         return changedTransactionDetail;
-    }
-
-    protected void calculateAccrualActivity(LoanTransaction loanTransaction, MonetaryCurrency currency,
-            List<LoanRepaymentScheduleInstallment> installments) {
-
-        final int firstNormalInstallmentNumber = LoanRepaymentScheduleProcessingWrapper.fetchFirstNormalInstallmentNumber(installments);
-
-        final LoanRepaymentScheduleInstallment currentInstallment = installments.stream()
-                .filter(installment -> LoanRepaymentScheduleProcessingWrapper.isInPeriod(loanTransaction.getTransactionDate(), installment,
-                        installment.getInstallmentNumber().equals(firstNormalInstallmentNumber)))
-                .findFirst().orElseThrow();
-
-        if (currentInstallment.isNotFullyPaidOff() && (currentInstallment.getDueDate().isAfter(loanTransaction.getTransactionDate())
-                || (currentInstallment.getDueDate().isEqual(loanTransaction.getTransactionDate())
-                        && loanTransaction.getTransactionDate().equals(DateUtils.getBusinessLocalDate())))) {
-            loanTransaction.reverse();
-        } else {
-            loanTransaction.resetDerivedComponents();
-            final Money principalPortion = Money.zero(currency);
-            Money interestPortion = currentInstallment.getInterestCharged(currency);
-            Money feeChargesPortion = currentInstallment.getFeeChargesCharged(currency);
-            Money penaltyChargesPortion = currentInstallment.getPenaltyChargesCharged(currency);
-            if (interestPortion.plus(feeChargesPortion).plus(penaltyChargesPortion).isZero()) {
-                loanTransaction.reverse();
-            } else {
-                loanTransaction.updateComponentsAndTotal(principalPortion, interestPortion, feeChargesPortion, penaltyChargesPortion);
-                final Loan loan = loanTransaction.getLoan();
-                if ((loan.isClosedObligationsMet() || loanBalanceService.isOverPaid(loan)) && currentInstallment.isObligationsMet()
-                        && currentInstallment.isTransactionDateWithinPeriod(currentInstallment.getObligationsMetOnDate())) {
-                    loanTransaction.updateTransactionDate(currentInstallment.getObligationsMetOnDate());
-                }
-            }
-        }
-    }
-
-    private void recalculateAccrualActivityTransaction(ChangedTransactionDetail changedTransactionDetail, LoanTransaction loanTransaction,
-            MonetaryCurrency currency, List<LoanRepaymentScheduleInstallment> installments) {
-        final LoanTransaction newLoanTransaction = LoanTransaction.copyTransactionProperties(loanTransaction);
-
-        calculateAccrualActivity(newLoanTransaction, currency, installments);
-
-        if (!LoanTransaction.transactionAmountsMatch(currency, loanTransaction, newLoanTransaction)) {
-            createNewTransaction(loanTransaction, newLoanTransaction, changedTransactionDetail);
-        }
     }
 
     @Override
@@ -475,7 +427,7 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
 
     protected void reprocessInstallments(LocalDate disbursementDate, List<LoanTransaction> transactions,
             List<LoanRepaymentScheduleInstallment> installments, MonetaryCurrency currency) {
-        LoanRepaymentScheduleInstallment lastInstallment = installments.get(installments.size() - 1);
+        LoanRepaymentScheduleInstallment lastInstallment = installments.getLast();
         if (lastInstallment.isAdditional() && lastInstallment.getDue(currency).isZero()) {
             installments.remove(lastInstallment);
         }
@@ -519,8 +471,7 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
     }
 
     private void recalculateCreditTransaction(ChangedTransactionDetail changedTransactionDetail, LoanTransaction loanTransaction,
-            MonetaryCurrency currency, List<LoanRepaymentScheduleInstallment> installments, List<LoanTransaction> transactionsToBeProcessed,
-            MoneyHolder overpaymentHolder) {
+            MonetaryCurrency currency, List<LoanRepaymentScheduleInstallment> installments, MoneyHolder overpaymentHolder) {
         // pass through for new transactions
         if (loanTransaction.getId() == null) {
             return;
@@ -606,7 +557,7 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
             // New installment will be added (N+1 scenario)
             if (!loanTransactionMapped) {
                 if (loanTransaction.getTransactionDate().equals(pastDueDate)) {
-                    LoanRepaymentScheduleInstallment currentInstallment = installmentToBeProcessed.get(installmentToBeProcessed.size() - 1);
+                    LoanRepaymentScheduleInstallment currentInstallment = installmentToBeProcessed.getLast();
                     currentInstallment.addToCreditedPrincipal(transactionAmount.getAmount());
                     currentInstallment.addToPrincipal(transactionDate, transactionAmount);
                     if (repaidAmount.isGreaterThanZero()) {
@@ -647,7 +598,7 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
         final Set<LoanCharge> loanPenalties = extractPenaltyCharges(charges);
         Integer installmentNumber = null;
         if (loanTransaction.isChargePayment() && installments.size() == 1) {
-            installmentNumber = installments.get(0).getInstallmentNumber();
+            installmentNumber = installments.getFirst().getInstallmentNumber();
         }
 
         if (loanTransaction.isNotWaiver() && !loanTransaction.isAccrual() && !loanTransaction.isAccrualActivity()) {
@@ -728,6 +679,8 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
             final Integer installmentNumber) {
 
         Money amountRemaining = chargeAmount;
+        final Set<LoanCharge> chargesThatCannotBeFullyPaidByOneInstallment = new HashSet<>();
+
         while (amountRemaining.isGreaterThanZero()) {
             final LoanCharge unpaidCharge = findEarliestUnpaidChargeFromUnOrderedSet(charges, chargeAmount.getCurrency());
             Money feeAmount = chargeAmount.zero();
@@ -737,6 +690,12 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
             if (unpaidCharge == null) {
                 break; // All are trache charges
             }
+
+            // If we've already determined this charge cannot be fully paid by one installment, skip it
+            if (chargesThatCannotBeFullyPaidByOneInstallment.contains(unpaidCharge)) {
+                charges.remove(unpaidCharge);
+            }
+
             final Money amountPaidTowardsCharge = unpaidCharge.updatePaidAmountBy(amountRemaining, installmentNumber, feeAmount);
             if (!amountPaidTowardsCharge.isZero()) {
                 Set<LoanChargePaidBy> chargesPaidBies = loanTransaction.getLoanChargesPaid();
@@ -753,6 +712,8 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
                     chargesPaidBies.add(loanChargePaidBy);
                 }
                 amountRemaining = amountRemaining.minus(amountPaidTowardsCharge);
+            } else {
+                chargesThatCannotBeFullyPaidByOneInstallment.add(unpaidCharge);
             }
         }
 
@@ -789,6 +750,7 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
                 }
             }
         }
+
         if (earliestUnpaidCharge == null || (chargePerInstallment != null && DateUtils.isAfter(earliestUnpaidCharge.getDueLocalDate(),
                 chargePerInstallment.getRepaymentInstallment().getDueDate()))) {
             earliestUnpaidCharge = installemntCharge;
@@ -819,6 +781,7 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
             }
         }
 
+        loanTransaction.resetDerivedComponents();
         loanTransaction.updateComponentsAndTotal(principalPortion, interestPortion, feeChargesPortion, penaltychargesPortion);
     }
 
@@ -944,12 +907,12 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
             return null;
         }
         LoanCharge latestCharge = null;
-        List<LoanCharge> chargesWithSpecificDueDate = new ArrayList<>();
-        chargesWithSpecificDueDate.addAll(charges.stream().filter(charge -> charge.isSpecifiedDueDate()).toList());
+        final List<LoanCharge> chargesWithSpecificDueDate = new ArrayList<>(
+                charges.stream().filter(LoanCharge::isSpecifiedDueDate).toList());
         if (!CollectionUtils.isEmpty(chargesWithSpecificDueDate)) {
-            Collections.sort(chargesWithSpecificDueDate,
-                    (charge1, charge2) -> DateUtils.compare(charge1.getEffectiveDueDate(), charge2.getEffectiveDueDate()));
-            latestCharge = chargesWithSpecificDueDate.get(chargesWithSpecificDueDate.size() - 1);
+            chargesWithSpecificDueDate
+                    .sort((charge1, charge2) -> DateUtils.compare(charge1.getEffectiveDueDate(), charge2.getEffectiveDueDate()));
+            latestCharge = chargesWithSpecificDueDate.getLast();
         }
         return latestCharge;
     }

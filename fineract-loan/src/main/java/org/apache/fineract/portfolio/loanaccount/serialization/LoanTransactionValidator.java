@@ -92,4 +92,10 @@ public interface LoanTransactionValidator {
     void validateNote(DataValidatorBuilder baseDataValidator, JsonElement element);
 
     void validateExternalId(DataValidatorBuilder baseDataValidator, JsonElement element);
+
+    void validateReversalExternalId(DataValidatorBuilder baseDataValidator, JsonElement element);
+
+    void validateManualInterestRefundTransaction(String json);
+
+    void validateClassificationCodeValue(String codeName, Long transactionClassificationId, DataValidatorBuilder baseDataValidator);
 }

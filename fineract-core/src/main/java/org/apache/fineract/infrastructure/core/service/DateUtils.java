@@ -20,7 +20,6 @@ package org.apache.fineract.infrastructure.core.service;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,7 +27,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
@@ -39,6 +40,7 @@ import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.JsonParserHelper;
+import org.springframework.lang.NonNull;
 
 public final class DateUtils {
 
@@ -84,8 +86,8 @@ public final class DateUtils {
         return truncate == null ? now : now.truncatedTo(truncate);
     }
 
-    @NotNull
-    public static OffsetDateTime getOffsetDateTimeOfTenantFromLocalDate(@NotNull final LocalDate date) {
+    @NonNull
+    public static OffsetDateTime getOffsetDateTimeOfTenantFromLocalDate(@NonNull final LocalDate date) {
         return OffsetDateTime.of(date.atStartOfDay(), getOffsetDateTimeOfTenant().getOffset());
     }
 
@@ -128,16 +130,8 @@ public final class DateUtils {
         return compare(first, second, truncate) == 0;
     }
 
-    public static boolean isEqualTenantDateTime(LocalDateTime dateTime) {
-        return isEqualTenantDateTime(dateTime, null);
-    }
-
     public static boolean isEqualTenantDateTime(LocalDateTime dateTime, ChronoUnit truncate) {
         return isEqual(dateTime, getLocalDateTimeOfTenant(), truncate);
-    }
-
-    public static boolean isEqualSystemDateTime(LocalDateTime dateTime) {
-        return isEqualSystemDateTime(dateTime, null);
     }
 
     public static boolean isEqualSystemDateTime(LocalDateTime dateTime, ChronoUnit truncate) {
@@ -150,22 +144,6 @@ public final class DateUtils {
 
     public static boolean isBefore(LocalDateTime first, LocalDateTime second, ChronoUnit truncate) {
         return compare(first, second, truncate) < 0;
-    }
-
-    public static boolean isBeforeTenantDateTime(LocalDateTime dateTime) {
-        return isBeforeTenantDateTime(dateTime, null);
-    }
-
-    public static boolean isBeforeTenantDateTime(LocalDateTime dateTime, ChronoUnit truncate) {
-        return isBefore(dateTime, getLocalDateTimeOfTenant(), truncate);
-    }
-
-    public static boolean isBeforeSystemDateTime(LocalDateTime dateTime) {
-        return isBeforeSystemDateTime(dateTime, null);
-    }
-
-    public static boolean isBeforeSystemDateTime(LocalDateTime dateTime, ChronoUnit truncate) {
-        return isBefore(dateTime, getLocalDateTimeOfSystem(), truncate);
     }
 
     public static boolean isAfter(LocalDateTime first, LocalDateTime second) {
@@ -184,10 +162,6 @@ public final class DateUtils {
         return isAfter(dateTime, getLocalDateTimeOfTenant(), truncate);
     }
 
-    public static boolean isAfterSystemDateTime(LocalDateTime dateTime) {
-        return isAfterSystemDateTime(dateTime, null);
-    }
-
     public static boolean isAfterSystemDateTime(LocalDateTime dateTime, ChronoUnit truncate) {
         return isAfter(dateTime, getLocalDateTimeOfSystem(), truncate);
     }
@@ -204,7 +178,7 @@ public final class DateUtils {
         return compare(first, second, null, false);
     }
 
-    public static int compareWithNullsLast(@NotNull Optional<OffsetDateTime> first, @NotNull Optional<OffsetDateTime> second) {
+    public static int compareWithNullsLast(@NonNull Optional<OffsetDateTime> first, @NonNull Optional<OffsetDateTime> second) {
         return compareWithNullsLast(first.orElse(null), second.orElse(null));
     }
 
@@ -228,10 +202,6 @@ public final class DateUtils {
         return compare(first, second, truncate) == 0;
     }
 
-    public static boolean isEqualTenantDateTime(OffsetDateTime dateTime) {
-        return isEqualTenantDateTime(dateTime, null);
-    }
-
     public static boolean isEqualTenantDateTime(OffsetDateTime dateTime, ChronoUnit truncate) {
         return isEqual(dateTime, getOffsetDateTimeOfTenant(), truncate);
     }
@@ -242,10 +212,6 @@ public final class DateUtils {
 
     public static boolean isBefore(OffsetDateTime first, OffsetDateTime second, ChronoUnit truncate) {
         return compare(first, second, truncate) < 0;
-    }
-
-    public static boolean isBeforeTenantDateTime(OffsetDateTime dateTime) {
-        return isBeforeTenantDateTime(dateTime, null);
     }
 
     public static boolean isBeforeTenantDateTime(OffsetDateTime dateTime, ChronoUnit truncate) {
@@ -260,10 +226,6 @@ public final class DateUtils {
         return compare(first, second, truncate) > 0;
     }
 
-    public static boolean isAfterTenantDateTime(OffsetDateTime dateTime) {
-        return isAfterTenantDateTime(dateTime, null);
-    }
-
     public static boolean isAfterTenantDateTime(OffsetDateTime dateTime, ChronoUnit truncate) {
         return isAfter(dateTime, getOffsetDateTimeOfTenant(), truncate);
     }
@@ -274,20 +236,12 @@ public final class DateUtils {
         return ThreadLocalContextUtil.getBusinessDate();
     }
 
-    public static int compareToBusinessDate(LocalDate date) {
-        return compare(date, getBusinessLocalDate());
-    }
-
     public static boolean isEqualTenantDate(LocalDate date) {
         return isEqual(date, getLocalDateOfTenant());
     }
 
     public static boolean isBeforeTenantDate(LocalDate date) {
         return isBefore(date, getLocalDateOfTenant());
-    }
-
-    public static boolean isAfterTenantDate(LocalDate date) {
-        return isAfter(date, getLocalDateOfTenant());
     }
 
     public static boolean isEqualBusinessDate(LocalDate date) {
@@ -304,10 +258,6 @@ public final class DateUtils {
 
     public static boolean isDateInTheFuture(final LocalDate localDate) {
         return isAfterBusinessDate(localDate);
-    }
-
-    public static boolean isDateInThePast(final LocalDate localDate) {
-        return isBeforeBusinessDate(localDate);
     }
 
     public static boolean isDateInRangeFromInclusiveToExclusive(final LocalDate fromInclusive, final LocalDate upToNotInclusive,
@@ -352,14 +302,14 @@ public final class DateUtils {
         return isAfter(first, second) || isEqual(first, second);
     }
 
-    public static long getDifference(LocalDate first, LocalDate second, @NotNull ChronoUnit unit) {
+    public static long getDifference(LocalDate first, LocalDate second, @NonNull ChronoUnit unit) {
         if (first == null || second == null) {
             throw new IllegalArgumentException("Dates must not be null to get difference");
         }
         return unit.between(first, second);
     }
 
-    public static int getExactDifference(LocalDate first, LocalDate second, @NotNull ChronoUnit unit) {
+    public static int getExactDifference(LocalDate first, LocalDate second, @NonNull ChronoUnit unit) {
         return Math.toIntExact(getDifference(first, second, unit));
     }
 
@@ -397,6 +347,16 @@ public final class DateUtils {
                     "The parameter date (" + stringDate + ") format is invalid", "date", stringDate));
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", errors, e);
         }
+    }
+
+    public static LocalDate toLocalDate(String local, String date, String dateFormat) {
+        Locale locale = Locale.forLanguageTag(local);
+        String patternISO = dateFormat.replace("y", "u");
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder().parseCaseInsensitive().parseLenient().appendPattern(patternISO)
+                .optionalStart().appendPattern(" HH:mm:ss").optionalEnd().parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0).parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0).toFormatter(locale)
+                .withResolverStyle(ResolverStyle.STRICT);
+        return LocalDateTime.parse(date, formatter).toLocalDate();
     }
 
     public static String format(LocalDate date) {
@@ -453,7 +413,7 @@ public final class DateUtils {
         return fromDate != null && DateUtils.isAfter(targetDate, fromDate) && !DateUtils.isAfter(targetDate, toDate);
     }
 
-    @NotNull
+    @NonNull
     private static DateTimeFormatter getDateFormatter(String format, Locale locale) {
         DateTimeFormatter formatter = DEFAULT_DATE_FORMATTER;
         if (format != null || locale != null) {
@@ -465,7 +425,7 @@ public final class DateUtils {
         return formatter;
     }
 
-    @NotNull
+    @NonNull
     private static DateTimeFormatter getDateTimeFormatter(String format, Locale locale) {
         DateTimeFormatter formatter = DEFAULT_DATETIME_FORMATTER;
         if (format != null || locale != null) {
