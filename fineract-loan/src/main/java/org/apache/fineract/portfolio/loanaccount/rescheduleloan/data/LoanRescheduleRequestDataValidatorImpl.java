@@ -278,7 +278,7 @@ public class LoanRescheduleRequestDataValidatorImpl implements LoanRescheduleReq
 
             LoanRepaymentScheduleInstallment installment = loan.fetchLoanRepaymentScheduleInstallmentByDueDate(rescheduleFromDate);
             validateReschedulingInstallment(dataValidatorBuilder, installment);
-            validateForOverdueCharges(dataValidatorBuilder, loan, installment);
+            //validateForOverdueCharges(dataValidatorBuilder, loan, installment);
 
             if (!dataValidationErrors.isEmpty()) {
                 throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -329,7 +329,7 @@ public class LoanRescheduleRequestDataValidatorImpl implements LoanRescheduleReq
             installment = loan.fetchLoanRepaymentScheduleInstallmentByDueDate(rescheduleFromDate);
 
             validateReschedulingInstallment(dataValidatorBuilder, installment);
-            validateForOverdueCharges(dataValidatorBuilder, loan, installment);
+            //validateForOverdueCharges(dataValidatorBuilder, loan, installment);
 
             if (!dataValidationErrors.isEmpty()) {
                 throw new PlatformApiDataValidationException(dataValidationErrors);
