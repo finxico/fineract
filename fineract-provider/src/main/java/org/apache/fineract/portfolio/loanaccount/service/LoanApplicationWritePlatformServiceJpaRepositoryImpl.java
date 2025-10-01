@@ -27,7 +27,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import jakarta.persistence.PersistenceException;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
@@ -105,11 +104,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -182,14 +176,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             // SOLICITUD ENVIADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
 
-            eventPublisher.publish(
-                    "arka.fineract",
-                    "loan.apply.submited",
-                    Map.of(
-                            "loanId", loan.getId(),
-                            "clientId", loan.getClientId()
-                    )
-            );
+            eventPublisher.publish("arka.fineract", "loan.apply.submited", Map.of("loanId", loan.getId(), "clientId", loan.getClientId()));
 
             // Building response
             return new CommandProcessingResultBuilder() //
@@ -592,14 +579,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         }
 
         // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish(
-            "arka.fineract",
-            "loan.apply.approved",
-            Map.of(
-                "loanId", loanId,
-                "clientId", loan.getClientId()
-            )
-        );
+        eventPublisher.publish("arka.fineract", "loan.apply.approved", Map.of("loanId", loanId, "clientId", loan.getClientId()));
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -737,14 +717,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         businessEventNotifierService.notifyPostBusinessEvent(new LoanRejectedBusinessEvent(loan));
 
         // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish(
-                "arka.fineract",
-                "loan.apply.rejected",
-                Map.of(
-                        "loanId", loanId,
-                        "clientId", loan.getClientId()
-                )
-        );
+        eventPublisher.publish("arka.fineract", "loan.apply.rejected", Map.of("loanId", loanId, "clientId", loan.getClientId()));
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //

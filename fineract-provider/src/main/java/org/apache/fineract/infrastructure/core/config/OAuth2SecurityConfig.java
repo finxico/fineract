@@ -31,14 +31,10 @@ import java.util.List;
 import org.apache.fineract.infrastructure.businessdate.service.BusinessDateReadPlatformService;
 import org.apache.fineract.infrastructure.cache.service.CacheWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
-import org.apache.fineract.infrastructure.core.exceptionmapper.OAuth2ExceptionEntryPoint;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.security.data.FineractJwtAuthenticationToken;
 import org.apache.fineract.infrastructure.security.data.PlatformRequestLog;
-import org.apache.fineract.infrastructure.security.filter.InsecureTwoFactorAuthenticationFilter;
-import org.apache.fineract.infrastructure.security.filter.TenantAwareTenantIdentifierFilter;
 import org.apache.fineract.infrastructure.security.filter.TwoFactorAuthenticationFilter;
-import org.apache.fineract.infrastructure.security.service.BasicAuthTenantDetailsService;
 import org.apache.fineract.infrastructure.security.service.TenantAwareJpaPlatformUserDetailsService;
 import org.apache.fineract.infrastructure.security.service.TwoFactorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +62,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 @Configuration
@@ -82,9 +77,6 @@ public class OAuth2SecurityConfig {
 
     @Autowired
     private FineractProperties fineractProperties;
-
-    @Autowired
-    private BasicAuthTenantDetailsService basicAuthTenantDetailsService;
 
     @Autowired
     private ToApiJsonSerializer<PlatformRequestLog> toApiJsonSerializer;
@@ -125,16 +117,11 @@ public class OAuth2SecurityConfig {
                             .access(allOf(authorizationManagers.toArray(new AuthorizationManager[0]))); //
                 }).csrf(AbstractHttpConfigurer::disable) // NOSONAR only creating a service that is used by non-browser
                                                          // clients
-                .exceptionHandling((ehc) -> ehc.authenticationEntryPoint(new OAuth2ExceptionEntryPoint()))
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(authenticationConverter()))
-                        .authenticationEntryPoint(new OAuth2ExceptionEntryPoint())) //
                 .sessionManagement((smc) -> smc.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) //
-                .addFilterAfter(tenantAwareTenantIdentifierFilter(), SecurityContextHolderFilter.class);
+                .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(authenticationConverter())));
 
         if (fineractProperties.getSecurity().getTwoFactor().isEnabled()) {
-            http.addFilterAfter(twoFactorAuthenticationFilter(), BasicAuthenticationFilter.class);
-        } else {
-            http.addFilterAfter(insecureTwoFactorAuthenticationFilter(), BasicAuthenticationFilter.class);
+            http.addFilterAfter(twoFactorAuthenticationFilter(), SecurityContextHolderFilter.class);
         }
 
         if (serverProperties.getSsl().isEnabled()) {
@@ -148,18 +135,9 @@ public class OAuth2SecurityConfig {
         return http.build();
     }
 
-    public TenantAwareTenantIdentifierFilter tenantAwareTenantIdentifierFilter() {
-        return new TenantAwareTenantIdentifierFilter(basicAuthTenantDetailsService, toApiJsonSerializer, configurationDomainService,
-                cacheWritePlatformService, businessDateReadPlatformService);
-    }
-
     public TwoFactorAuthenticationFilter twoFactorAuthenticationFilter() {
         TwoFactorService twoFactorService = applicationContext.getBean(TwoFactorService.class);
         return new TwoFactorAuthenticationFilter(twoFactorService);
-    }
-
-    public InsecureTwoFactorAuthenticationFilter insecureTwoFactorAuthenticationFilter() {
-        return new InsecureTwoFactorAuthenticationFilter();
     }
 
     @Bean

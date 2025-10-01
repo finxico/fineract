@@ -18,15 +18,14 @@
  */
 package org.apache.fineract.config;
 
-import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.eventbridge.EventBridgeClient;
 import software.amazon.awssdk.services.eventbridge.EventBridgeClientBuilder;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 
 @Configuration
 public class AwsEventBridgeConfig {
@@ -52,9 +51,7 @@ public class AwsEventBridgeConfig {
     @Bean
     public EventBridgeClient eventBridgeClient() {
         if (accessKey == null || secretKey == null) {
-            throw new IllegalStateException(
-                    "Debes definir las variables de entorno MI_APP_AWS_ACCESS_KEY y MI_APP_AWS_SECRET_KEY"
-            );
+            throw new IllegalStateException("Debes definir las variables de entorno MI_APP_AWS_ACCESS_KEY y MI_APP_AWS_SECRET_KEY");
         }
 
         // Crea el proveedor de credenciales estático
@@ -63,10 +60,10 @@ public class AwsEventBridgeConfig {
 
         EventBridgeClientBuilder builder = EventBridgeClient.builder().credentialsProvider(provider).region(Region.of(awsRegion));
 
-        //if (awsEndpoint != null && !awsEndpoint.isBlank()) {
-        //    // Si estás apuntando a LocalStack u otro endpoint HTTP
-        //    builder.endpointOverride(URI.create(awsEndpoint));
-        //}
+        // if (awsEndpoint != null && !awsEndpoint.isBlank()) {
+        // // Si estás apuntando a LocalStack u otro endpoint HTTP
+        // builder.endpointOverride(URI.create(awsEndpoint));
+        // }
 
         return builder.build();
     }

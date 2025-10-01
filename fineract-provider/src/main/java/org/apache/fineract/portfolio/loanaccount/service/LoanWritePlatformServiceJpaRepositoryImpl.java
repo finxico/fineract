@@ -32,7 +32,6 @@ import com.google.gson.JsonObject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.resilience4j.retry.annotation.Retry;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -227,11 +226,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -361,14 +355,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
 
         // CREDITO DESEMBOLSADO / ENVIAR AL EVENT BRIDGE
-        eventPublisher.publish(
-                "arka.fineract",
-                "loan.disbursed",
-                Map.of(
-                        "loanId", loan.getId(),
-                        "clientId", loan.getClientId()
-                )
-        );
+        eventPublisher.publish("arka.fineract", "loan.disbursed", Map.of("loanId", loan.getId(), "clientId", loan.getClientId()));
 
         List<Long> existingTransactionIds = new ArrayList<>();
         List<Long> existingReversedTransactionIds = new ArrayList<>();
@@ -1128,34 +1115,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         loan = loanTransaction.getLoan();
         this.loanAccountDomainService.updateAndSaveLoanCollateralTransactionsForIndividualAccounts(loan, loanTransaction);
         // PAGO RECIBIDO / ENVIAR AL EVENT BRIDGE
-        eventPublisher.publish(
-                "arka.fineract",
-                "loan.repayment.make",
-                Map.of(
-                        "loanId", loanTransaction.getLoan().getId(),
-                        "clientId", loan.getClientId(),
-                        "amount",      transactionAmount,
-                        "transactionId", loanTransaction.getId()
-                )
-        );
+        eventPublisher.publish("arka.fineract", "loan.repayment.make", Map.of("loanId", loanTransaction.getLoan().getId(), "clientId",
+                loan.getClientId(), "amount", transactionAmount, "transactionId", loanTransaction.getId()));
         if (loan.getStatus().isClosedObligationsMet()) {
-            eventPublisher.publish("arka.fineract", "loan.closed.obligations.met",
-                Map.of(
-                    "loanId", loan.getId(),
-                    "clientId", loan.getClientId(),
-                    "transactionId", loanTransaction.getId(),
-                    "statusCode", 600
-                )
-            );
+            eventPublisher.publish("arka.fineract", "loan.closed.obligations.met", Map.of("loanId", loan.getId(), "clientId",
+                    loan.getClientId(), "transactionId", loanTransaction.getId(), "statusCode", 600));
         } else if (loan.getStatus().isOverpaid()) {
-            eventPublisher.publish("arka.fineract", "loan.overpaid",
-                Map.of(
-                    "loanId", loan.getId(),
-                    "clientId", loan.getClientId(),
-                    "transactionId", loanTransaction.getId(),
-                    "statusCode", 700
-                )
-            );
+            eventPublisher.publish("arka.fineract", "loan.overpaid", Map.of("loanId", loan.getId(), "clientId", loan.getClientId(),
+                    "transactionId", loanTransaction.getId(), "statusCode", 700));
         }
         return new CommandProcessingResultBuilder().withCommandId(command.commandId()) //
                 .withLoanId(loan.getId()) //

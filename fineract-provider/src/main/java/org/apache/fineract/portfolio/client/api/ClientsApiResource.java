@@ -453,7 +453,8 @@ public class ClientsApiResource {
         sqlValidator.validate(hierarchy);
         final SearchParameters searchParameters = SearchParameters.builder().limit(limit).officeId(officeId).externalId(externalId)
                 .name(displayName).hierarchy(hierarchy).firstname(firstname).lastname(lastname).status(status).orphansOnly(orphansOnly)
-                .isSelfUser(isSelfUser).offset(offset).orderBy(orderBy).sortOrder(sortOrder).legalForm(legalForm).advancedQuery(advancedQuery).build();
+                .isSelfUser(isSelfUser).offset(offset).orderBy(orderBy).sortOrder(sortOrder).legalForm(legalForm)
+                .advancedQuery(advancedQuery).build();
         final Page<ClientData> clientData = clientReadPlatformService.retrieveAll(searchParameters);
         final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);

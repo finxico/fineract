@@ -83,7 +83,6 @@ import org.apache.fineract.portfolio.loanproduct.domain.LoanSupportedInterestRef
 import org.apache.fineract.portfolio.rate.domain.Rate;
 import org.apache.fineract.portfolio.repaymentwithpostdatedchecks.domain.PostDatedChecks;
 import org.apache.fineract.useradministration.domain.AppUser;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.lang.NonNull;
 
 @Entity

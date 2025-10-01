@@ -53,7 +53,6 @@ import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.useradministration.domain.AppUser;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Getter

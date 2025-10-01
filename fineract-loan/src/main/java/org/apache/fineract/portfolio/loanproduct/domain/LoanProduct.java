@@ -72,7 +72,6 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanSchedul
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.exception.LoanProductGeneralRuleException;
 import org.apache.fineract.portfolio.rate.domain.Rate;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**
  * Loan products allow for categorisation of an organisations loans into something meaningful to them.

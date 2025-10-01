@@ -18,10 +18,8 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
-import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.google.gson.JsonElement;
 import jakarta.persistence.PersistenceException;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -99,10 +97,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 @AllArgsConstructor
 @Service
@@ -349,13 +343,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             }
 
             // CLIENTE CREADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            eventPublisher.publish(
-                    "arka.fineract",
-                    "client.created",
-                    Map.of(
-                            "clientId", newClient.getId()
-                    )
-            );
+            eventPublisher.publish("arka.fineract", "client.created", Map.of("clientId", newClient.getId()));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -745,13 +733,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
 
             // CLIENTE ACTIVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            eventPublisher.publish(
-                    "arka.fineract",
-                    "client.activated",
-                    Map.of(
-                            "clientId", clientId
-                    )
-            );
+            eventPublisher.publish("arka.fineract", "client.activated", Map.of("clientId", clientId));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -1015,13 +997,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         businessEventNotifierService.notifyPostBusinessEvent(new ClientRejectBusinessEvent(client));
 
         // CLIENTE RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish(
-            "arka.fineract",
-            "client.rejected",
-            Map.of(
-                "clientId", client.getId()
-            )
-        );
+        eventPublisher.publish("arka.fineract", "client.rejected", Map.of("clientId", client.getId()));
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
