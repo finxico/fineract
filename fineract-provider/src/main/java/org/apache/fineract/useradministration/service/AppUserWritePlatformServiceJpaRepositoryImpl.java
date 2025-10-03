@@ -135,16 +135,9 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final Boolean sendPasswordToEmail = command.booleanObjectValueOfParameterNamed("sendPasswordToEmail");
             this.userDomainService.create(appUser, sendPasswordToEmail);
 
-            log.info("[EVENT] Publicando 'user.created' en el bus, userId={}",  appUser.getId());
+            log.info("[EVENT] Publicando 'user.created' en el bus, userId={}", appUser.getId());
             // USUARIO CREADO
-            eventPublisher.publish(
-                    "arka.fineract",
-                    "user.created",
-                    Map.of(
-                            "userId",  appUser.getId()
-                    )
-            );
-
+            eventPublisher.publish("arka.fineract", "user.created", Map.of("userId", appUser.getId()));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -326,15 +319,9 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         user.delete();
         this.appUserRepository.save(user);
 
-        log.info("[EVENT] Publicando 'user.deleted'  userId={}",  userId);
+        log.info("[EVENT] Publicando 'user.deleted'  userId={}", userId);
         // USARIO BORRADO
-        eventPublisher.publish(
-                "arka.fineract",
-                "user.deleted",
-                Map.of(
-                        "userId", userId
-                )
-        );
+        eventPublisher.publish("arka.fineract", "user.deleted", Map.of("userId", userId));
 
         return new CommandProcessingResultBuilder().withEntityId(userId).withOfficeId(user.getOffice().getId()).build();
     }

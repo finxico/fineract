@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 
 @Path("/v1/self/userdetails")
 @Component
-@ConditionalOnProperty("fineract.security.oauth.enabled")
+@ConditionalOnProperty("fineract.security.oauth2.enabled")
 @Tag(name = "Self User Details", description = "")
 @RequiredArgsConstructor
 @Conditional(SelfServiceModuleIsEnabledCondition.class)
@@ -48,7 +48,7 @@ public class SelfUserDetailsApiResource {
     @GET
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Fetch authenticated user details", description = "Checks the Authentication and returns the set roles and permissions allowed\n\n"
-            + "For more info visit this link - https://fineract.apache.org/legacy-docs/apiLive.htm#selfoauth")
+            + "For more info visit this link - https://fineract.apache.org/docs/legacy/#selfoauth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SelfUserDetailsApiResourceSwagger.GetSelfUserDetailsResponse.class))) })
     public String fetchAuthenticatedUserData() {

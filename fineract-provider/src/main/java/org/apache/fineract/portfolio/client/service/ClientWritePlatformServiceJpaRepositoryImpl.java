@@ -18,10 +18,8 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
-import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.google.gson.JsonElement;
 import jakarta.persistence.PersistenceException;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -99,10 +97,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 @AllArgsConstructor
 @Service
@@ -299,7 +293,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     savingsProductId, savingsAccountId, dataOfBirth, gender, clientType, clientClassification, legalForm.getValue(),
                     isStaff);
 
+            // Account Number generation
             this.clientRepository.saveAndFlush(newClient);
+            if (StringUtils.isBlank(accountNo)) {
+                AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.CLIENT);
+                newClient.updateAccountNo(accountNumberGenerator.generate(newClient, accountNumberFormat));
+                this.clientRepository.saveAndFlush(newClient);
+            }
+
             boolean rollbackTransaction = false;
             if (newClient.isActive()) {
                 validateParentGroupRulesBeforeClientActivation(newClient);
@@ -307,13 +308,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 final CommandWrapper commandWrapper = new CommandWrapperBuilder().activateClient(null).build();
                 rollbackTransaction = this.commandProcessingService.validateRollbackCommand(commandWrapper, currentUser);
             }
-
             this.clientRepository.saveAndFlush(newClient);
-            if (newClient.isAccountNumberRequiresAutoGeneration()) {
-                AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.CLIENT);
-                newClient.updateAccountNo(accountNumberGenerator.generate(newClient, accountNumberFormat));
-                this.clientRepository.saveAndFlush(newClient);
-            }
 
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormatter.ofPattern(command.dateFormat()).withLocale(locale);
@@ -348,13 +343,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             }
 
             // CLIENTE CREADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            eventPublisher.publish(
-                    "arka.fineract",
-                    "client.created",
-                    Map.of(
-                            "clientId", newClient.getId()
-                    )
-            );
+            eventPublisher.publish("arka.fineract", "client.created", Map.of("clientId", newClient.getId()));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -744,13 +733,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             businessEventNotifierService.notifyPostBusinessEvent(new ClientActivateBusinessEvent(client));
 
             // CLIENTE ACTIVADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-            eventPublisher.publish(
-                    "arka.fineract",
-                    "client.activated",
-                    Map.of(
-                            "clientId", clientId
-                    )
-            );
+            eventPublisher.publish("arka.fineract", "client.activated", Map.of("clientId", clientId));
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -1014,13 +997,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         businessEventNotifierService.notifyPostBusinessEvent(new ClientRejectBusinessEvent(client));
 
         // CLIENTE RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish(
-            "arka.fineract",
-            "client.rejected",
-            Map.of(
-                "clientId", client.getId()
-            )
-        );
+        eventPublisher.publish("arka.fineract", "client.rejected", Map.of("clientId", client.getId()));
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -1141,4 +1118,5 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 .withEntityExternalId(client.getExternalId()) //
                 .build();
     }
+
 }

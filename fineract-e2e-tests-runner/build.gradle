@@ -40,7 +40,7 @@ dependencies {
 
     testImplementation 'com.squareup.retrofit2:retrofit:2.11.0'
     testImplementation 'org.apache.httpcomponents:httpclient:4.5.14'
-    testImplementation 'org.apache.commons:commons-lang3:3.17.0'
+    testImplementation 'org.apache.commons:commons-lang3:3.18.0'
     testImplementation ('com.googlecode.json-simple:json-simple:1.1.1') {
         exclude group: 'junit', module: 'junit'
     }
@@ -81,13 +81,23 @@ tasks.named('cucumber').get().finalizedBy 'allureReport'
 tasks.named('cucumber').get().dependsOn 'spotlessCheck'
 
 cucumber {
-    tags = 'not @ignore'
-    main = 'io.cucumber.core.cli.Main'
-    shorten = 'argfile'
-    plugin = [
-        'pretty',
-        'io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm'
-    ]
+    // Use -Pcucumber.features=... if passed, otherwise default
+    if (project.hasProperty("cucumber.features")) {
+        featurePath = project.getProperty("cucumber.features")
+    } else {
+        featurePath = "src/test/resources/features";
+    }
+
+    tags = 'not @Skip'
+    if (project.hasProperty("cucumber.tags")) {
+        tags = [project.getProperty("cucumber.tags")]
+    }
+
+    if (project.hasProperty("cucumber.name")) {
+        name = project.getProperty("cucumber.name")
+    }
+
+    plugin = ['pretty', 'io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm']
 }
 
 allure {

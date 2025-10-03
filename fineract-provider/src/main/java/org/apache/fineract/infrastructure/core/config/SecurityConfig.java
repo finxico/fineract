@@ -28,12 +28,11 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.apache.fineract.commands.domain.CommandSourceRepository;
-import org.apache.fineract.commands.service.CommandSourceService;
 import org.apache.fineract.infrastructure.businessdate.service.BusinessDateReadPlatformService;
 import org.apache.fineract.infrastructure.cache.service.CacheWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.domain.FineractRequestContextHolder;
+import org.apache.fineract.infrastructure.core.filters.CallerIpTrackingFilter;
 import org.apache.fineract.infrastructure.core.filters.CorrelationHeaderFilter;
 import org.apache.fineract.infrastructure.core.filters.IdempotencyStoreFilter;
 import org.apache.fineract.infrastructure.core.filters.IdempotencyStoreHelper;
@@ -44,11 +43,9 @@ import org.apache.fineract.infrastructure.instancemode.filter.FineractInstanceMo
 import org.apache.fineract.infrastructure.jobs.filter.LoanCOBApiFilter;
 import org.apache.fineract.infrastructure.jobs.filter.LoanCOBFilterHelper;
 import org.apache.fineract.infrastructure.security.data.PlatformRequestLog;
-import org.apache.fineract.infrastructure.security.filter.InsecureTwoFactorAuthenticationFilter;
 import org.apache.fineract.infrastructure.security.filter.TenantAwareBasicAuthenticationFilter;
 import org.apache.fineract.infrastructure.security.filter.TwoFactorAuthenticationFilter;
-import org.apache.fineract.infrastructure.security.service.BasicAuthTenantDetailsService;
-import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.infrastructure.security.service.AuthTenantDetailsService;
 import org.apache.fineract.infrastructure.security.service.TenantAwareJpaPlatformUserDetailsService;
 import org.apache.fineract.infrastructure.security.service.TwoFactorService;
 import org.apache.fineract.notification.service.UserNotificationService;
@@ -105,22 +102,16 @@ public class SecurityConfig {
     @Autowired
     private UserNotificationService userNotificationService;
     @Autowired
-    private BasicAuthTenantDetailsService basicAuthTenantDetailsService;
+    private AuthTenantDetailsService basicAuthTenantDetailsService;
     @Autowired
     private BusinessDateReadPlatformService businessDateReadPlatformService;
     @Autowired
     private MDCWrapper mdcWrapper;
     @Autowired
-    private CommandSourceRepository commandSourceRepository;
-    @Autowired
-    private CommandSourceService commandSourceService;
-    @Autowired
     private FineractRequestContextHolder fineractRequestContextHolder;
 
     @Autowired(required = false)
     private LoanCOBFilterHelper loanCOBFilterHelper;
-    @Autowired
-    private PlatformSecurityContext context;
     @Autowired
     private IdempotencyStoreHelper idempotencyStoreHelper;
 
@@ -130,7 +121,9 @@ public class SecurityConfig {
                 .securityMatcher(antMatcher("/api/**")).authorizeHttpRequests((auth) -> {
                     List<AuthorizationManager<RequestAuthorizationContext>> authorizationManagers = new ArrayList<>();
                     authorizationManagers.add(fullyAuthenticated());
-                    authorizationManagers.add(hasAuthority("TWOFACTOR_AUTHENTICATED"));
+                    if (fineractProperties.getSecurity().getTwoFactor().isEnabled()) {
+                        authorizationManagers.add(hasAuthority("TWOFACTOR_AUTHENTICATED"));
+                    }
                     if (fineractProperties.getModule().getSelfService().isEnabled()) {
                         auth.requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/authentication")).permitAll() //
                                 .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/registration")).permitAll() //
@@ -141,6 +134,27 @@ public class SecurityConfig {
                             .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/echo")).permitAll() //
                             .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/authentication")).permitAll() //
                             .requestMatchers(antMatcher(HttpMethod.PUT, "/api/*/instance-mode")).permitAll() //
+                            // businessdate
+                            .requestMatchers(antMatcher(HttpMethod.GET, "/api/*/businessdate/*"))
+                            .hasAnyAuthority("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", "READ_BUSINESS_DATE")
+                            .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/businessdate"))
+                            .hasAnyAuthority("ALL_FUNCTIONS", "ALL_FUNCTIONS_WRITE", "UPDATE_BUSINESS_DATE")
+                            // external
+                            .requestMatchers(antMatcher(HttpMethod.GET, "/api/*/externalevents/configuration"))
+                            .hasAnyAuthority("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", "READ_EXTERNAL_EVENT_CONFIGURATION")
+                            .requestMatchers(antMatcher(HttpMethod.PUT, "/api/*/externalevents/configuration"))
+                            .hasAnyAuthority("ALL_FUNCTIONS", "ALL_FUNCTIONS_WRITE", "UPDATE_EXTERNAL_EVENT_CONFIGURATION")
+                            // cache
+                            .requestMatchers(antMatcher(HttpMethod.GET, "/api/*/caches"))
+                            .hasAnyAuthority("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", "READ_CACHE")
+                            .requestMatchers(antMatcher(HttpMethod.PUT, "/api/*/caches"))
+                            .hasAnyAuthority("ALL_FUNCTIONS", "ALL_FUNCTIONS_WRITE", "UPDATE_CACHE")
+                            // currency
+                            .requestMatchers(antMatcher(HttpMethod.GET, "/api/*/currencies"))
+                            .hasAnyAuthority("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", "READ_CURRENCY")
+                            .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/currencies"))
+                            .hasAnyAuthority("ALL_FUNCTIONS", "ALL_FUNCTIONS_WRITE", "UPDATE_CURRENCY")
+                            // ...
                             .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/twofactor/validate")).fullyAuthenticated() //
                             .requestMatchers(antMatcher("/api/*/twofactor")).fullyAuthenticated() //
                             .requestMatchers(antMatcher("/api/**"))
@@ -160,11 +174,11 @@ public class SecurityConfig {
         } else {
             http.addFilterAfter(idempotencyStoreFilter(), FineractInstanceModeApiFilter.class); //
         }
-
+        if (fineractProperties.getIpTracking().isEnabled()) {
+            http.addFilterAfter(callerIpTrackingFilter(), RequestResponseFilter.class);
+        }
         if (fineractProperties.getSecurity().getTwoFactor().isEnabled()) {
             http.addFilterAfter(twoFactorAuthenticationFilter(), CorrelationHeaderFilter.class);
-        } else {
-            http.addFilterAfter(insecureTwoFactorAuthenticationFilter(), CorrelationHeaderFilter.class);
         }
 
         if (serverProperties.getSsl().isEnabled()) {
@@ -191,10 +205,6 @@ public class SecurityConfig {
         return new TwoFactorAuthenticationFilter(twoFactorService);
     }
 
-    public InsecureTwoFactorAuthenticationFilter insecureTwoFactorAuthenticationFilter() {
-        return new InsecureTwoFactorAuthenticationFilter();
-    }
-
     public FineractInstanceModeApiFilter fineractInstanceModeApiFilter() {
         return new FineractInstanceModeApiFilter(fineractProperties);
     }
@@ -205,6 +215,10 @@ public class SecurityConfig {
 
     public CorrelationHeaderFilter correlationHeaderFilter() {
         return new CorrelationHeaderFilter(fineractProperties, mdcWrapper);
+    }
+
+    public CallerIpTrackingFilter callerIpTrackingFilter() {
+        return new CallerIpTrackingFilter(fineractProperties);
     }
 
     public TenantAwareBasicAuthenticationFilter tenantAwareBasicAuthenticationFilter() throws Exception {

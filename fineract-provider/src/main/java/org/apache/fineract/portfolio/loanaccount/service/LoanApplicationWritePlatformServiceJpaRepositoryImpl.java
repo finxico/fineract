@@ -27,7 +27,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import jakarta.persistence.PersistenceException;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
@@ -51,10 +50,12 @@ import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityEx
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
 import org.apache.fineract.infrastructure.dataqueries.service.EntityDatatableChecksWritePlatformService;
+import org.apache.fineract.infrastructure.event.business.domain.loan.LoanApplicationModifiedBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.loan.LoanApprovedBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.loan.LoanCreatedBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.loan.LoanRejectedBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.loan.LoanUndoApprovalBusinessEvent;
+import org.apache.fineract.infrastructure.event.business.domain.loan.LoanWithdrawnByApplicantBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.account.domain.AccountAssociationType;
@@ -103,11 +104,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -180,14 +176,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             // SOLICITUD ENVIADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
 
-            eventPublisher.publish(
-                    "arka.fineract",
-                    "loan.apply.submited",
-                    Map.of(
-                            "loanId", loan.getId(),
-                            "clientId", loan.getClientId()
-                    )
-            );
+            eventPublisher.publish("arka.fineract", "loan.apply.submited", Map.of("loanId", loan.getId(), "clientId", loan.getClientId()));
 
             // Building response
             return new CommandProcessingResultBuilder() //
@@ -309,6 +298,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                     && changes.containsKey(LoanProductConstants.IS_INTEREST_RECALCULATION_ENABLED_PARAMETER_NAME)) {
                 createAndPersistCalendarInstanceForInterestRecalculation(loan);
             }
+
+            businessEventNotifierService.notifyPostBusinessEvent(new LoanApplicationModifiedBusinessEvent(loan));
 
             return new CommandProcessingResultBuilder() //
                     .withEntityId(loanId) //
@@ -588,14 +579,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         }
 
         // SOLICITUD APROBADA / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish(
-            "arka.fineract",
-            "loan.apply.approved",
-            Map.of(
-                "loanId", loanId,
-                "clientId", loan.getClientId()
-            )
-        );
+        eventPublisher.publish("arka.fineract", "loan.apply.approved", Map.of("loanId", loanId, "clientId", loan.getClientId()));
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -654,7 +638,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 LocalDate recalculateFrom = null;
                 ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan, recalculateFrom);
                 loanScheduleService.regenerateRepaymentSchedule(loan, scheduleGeneratorDTO);
-                loanAccrualsProcessingService.reprocessExistingAccruals(loan);
+                loanAccrualsProcessingService.reprocessExistingAccruals(loan, false);
             }
 
             loan.adjustNetDisbursalAmount(loan.getProposedPrincipal());
@@ -733,14 +717,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         businessEventNotifierService.notifyPostBusinessEvent(new LoanRejectedBusinessEvent(loan));
 
         // CREDITO RECHAZADO / ENVIAR NOTIFICACION AL EVENT BRIDGE
-        eventPublisher.publish(
-                "arka.fineract",
-                "loan.apply.rejected",
-                Map.of(
-                        "loanId", loanId,
-                        "clientId", loan.getClientId()
-                )
-        );
+        eventPublisher.publish("arka.fineract", "loan.apply.rejected", Map.of("loanId", loanId, "clientId", loan.getClientId()));
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
@@ -782,6 +759,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final String noteText = command.stringValueOfParameterNamed("note");
             createNote(noteText, loan);
         }
+
+        businessEventNotifierService.notifyPostBusinessEvent(new LoanWithdrawnByApplicantBusinessEvent(loan));
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
